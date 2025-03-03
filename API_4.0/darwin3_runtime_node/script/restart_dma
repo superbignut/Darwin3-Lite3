@@ -1,0 +1,23 @@
+#! bin/bash
+SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+${SCRIPT_DIR}/chip_reset
+/sbin/rmmod dma-proxy
+/sbin/rmmod dma-proxy1
+/sbin/rmmod dma-proxy2
+/sbin/rmmod dma-proxy3
+/sbin/rmmod dma-proxy4
+/sbin/insmod ${SCRIPT_DIR}/drivers/dma-proxy.ko
+/sbin/insmod ${SCRIPT_DIR}/drivers/dma-proxy1.ko
+/sbin/insmod ${SCRIPT_DIR}/drivers/dma-proxy2.ko
+/sbin/insmod ${SCRIPT_DIR}/drivers/dma-proxy3.ko
+/sbin/insmod ${SCRIPT_DIR}/drivers/dma-proxy4.ko
+chmod a+r /dev/dma_proxy_tx /dev/dma_proxy_rx
+chmod a+w /dev/dma_proxy_tx /dev/dma_proxy_rx
+chmod a+r /dev/dma_proxy_tx1 /dev/dma_proxy_rx1
+chmod a+w /dev/dma_proxy_tx1 /dev/dma_proxy_rx1
+chmod a+r /dev/dma_proxy_tx2 /dev/dma_proxy_rx2
+chmod a+w /dev/dma_proxy_tx2 /dev/dma_proxy_rx2
+chmod a+r /dev/dma_proxy_tx3 /dev/dma_proxy_rx3
+chmod a+w /dev/dma_proxy_tx3 /dev/dma_proxy_rx3
+chmod a+r /dev/dma_proxy_tx4 /dev/dma_proxy_rx4
+chmod a+w /dev/dma_proxy_tx4 /dev/dma_proxy_rx4

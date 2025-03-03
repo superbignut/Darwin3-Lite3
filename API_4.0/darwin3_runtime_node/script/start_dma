@@ -1,0 +1,16 @@
+~/scripts/chip_reset
+/sbin/insmod ~/drivers/dma-proxy.ko
+/sbin/insmod ~/drivers/dma-proxy1.ko
+/sbin/insmod ~/drivers/dma-proxy2.ko
+/sbin/insmod ~/drivers/dma-proxy3.ko
+/sbin/insmod ~/drivers/dma-proxy4.ko
+chmod a+r /dev/dma_proxy_tx /dev/dma_proxy_rx
+chmod a+w /dev/dma_proxy_tx /dev/dma_proxy_rx
+chmod a+r /dev/dma_proxy_tx1 /dev/dma_proxy_rx1
+chmod a+w /dev/dma_proxy_tx1 /dev/dma_proxy_rx1
+chmod a+r /dev/dma_proxy_tx2 /dev/dma_proxy_rx2
+chmod a+w /dev/dma_proxy_tx2 /dev/dma_proxy_rx2
+chmod a+r /dev/dma_proxy_tx3 /dev/dma_proxy_rx3
+chmod a+w /dev/dma_proxy_tx3 /dev/dma_proxy_rx3
+chmod a+r /dev/dma_proxy_tx4 /dev/dma_proxy_rx4
+chmod a+w /dev/dma_proxy_tx4 /dev/dma_proxy_rx4

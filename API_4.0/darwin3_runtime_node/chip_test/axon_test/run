@@ -1,0 +1,5 @@
+case=${1}_${2}
+python3 /home/root/chip_test/axon_test/gen.py $1 $2
+cp /tmp/flitin.bin /home/root/chip_test/axon_test/gen${case}_flitin.bin
+#python3 /home/root/scripts/flits_sender.py /tmp/flitin.bin
+#awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum

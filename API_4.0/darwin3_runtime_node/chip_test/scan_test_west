@@ -1,0 +1,142 @@
+exep="python3 /home/root/scripts/flits_sender.py"
+exec=/home/root/scripts/flits_sender
+
+###########################################################################################
+# Reset Chip
+###########################################################################################
+function reset() {
+    source /home/root/scripts/restart_dma
+    $exec /home/root/chip_test/reset_clock/default_clock.bin
+    $exec /home/root/chip_test/reset_clock/pll_clock.bin
+}
+
+###########################################################################################
+# Init Clock
+###########################################################################################
+function init() {
+    echo "--Init Clock--"
+    # change to default clock
+    $exec /home/root/chip_test/reset_clock/default_clock.bin
+    # change to pll clock
+    $exec /home/root/chip_test/reset_clock/pll_clock.bin
+}
+
+reset
+###########################################################################################
+# RISCV Test
+###########################################################################################
+echo "--RISCV Test--"
+$exec /home/root/chip_test/riscv_test/riscv_ctrl_test_flitin.bin
+$exec /home/root/chip_test/riscv_test/read_riscv_flitin.bin
+sort flitout.txt | cksum
+
+init
+###########################################################################################
+# Axon Test
+###########################################################################################
+echo "--Axon Test--"
+# check 1
+for i in {0..14}
+do
+res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen${i}_1_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen${i}_1_flitin.bin`
+done
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+done
+#for i in {15..23}
+#do
+#res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen_east${i}_1_flitin.bin 1`
+#while [ ! -z "$res" ] ;
+#do
+#    reset
+#    res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen_east${i}_1_flitin.bin 1`
+#done
+#awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+#done
+# check 0
+for i in {0..14}
+do
+res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen${i}_0_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen${i}_0_flitin.bin`
+done
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+done
+#for i in {15..23}
+#do
+#res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen_east${i}_0_flitin.bin 1`
+#while [ ! -z "$res" ] ;
+#do
+#    reset
+#    res=`/home/root/scripts/flits_sender /home/root/chip_test/axon_test/gen_east${i}_0_flitin.bin 1`
+#done
+#awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+#done
+
+###########################################################################################
+# Dedr Test
+###########################################################################################
+echo "--Dedr Test--"
+#$exec /home/root/chip_test/reset_clock/lvds_pd.bin
+
+res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test1_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test1_flitin.bin`
+done
+$exec /home/root/chip_test/dedr_test/dedr_read_flitin.bin
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+
+res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test0_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test0_flitin.bin`
+done
+$exec /home/root/chip_test/dedr_test/dedr_read_flitin.bin
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+$exec /home/root/chip_test/dedr_test/dedr_off_flitin.bin
+
+res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test1_11_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test1_11_flitin.bin`
+done
+$exec /home/root/chip_test/dedr_test/dedr_read_11_flitin.bin
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+
+res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test0_11_flitin.bin`
+while [ ! -z "$res" ] ;
+do
+    reset
+    res=`/home/root/scripts/flits_sender /home/root/chip_test/dedr_test/dedr_test0_11_flitin.bin`
+done
+$exec /home/root/chip_test/dedr_test/dedr_read_11_flitin.bin
+awk '{if(NR % 4 != 1){if(NR % 4 != 0)ORS="";else ORS="\n";print}}' flitout.txt | sort | cksum
+$exec /home/root/chip_test/dedr_test/dedr_off_11_flitin.bin
+
+###########################################################################################
+# Spike Test
+###########################################################################################
+echo "--Spike Test--"
+$exec /home/root/chip_test/spike_test/spike_west_flitin.bin
+$exec /home/root/chip_test/spike_test/spike_east_flitin.bin 1
+$exec /home/root/chip_test/spike_test/spike_flitin.bin
+sort flitout.txt | cksum
+
+###########################################################################################
+# N/S Test
+###########################################################################################
+echo "--N/S Test--"
+$exec /home/root/chip_test/ns_test/north_flitin.bin 2
+sort flitout.txt | cksum
+$exec /home/root/chip_test/ns_test/south_flitin.bin 3
+sort flitout.txt | cksum
+

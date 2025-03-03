@@ -1,0 +1,6 @@
+0 cmd 0xc0000001
+0 write 0 2 0x04 0x3
+0 write_ram 0 2 0x1ff9c 0-2-is.txt
+0 write 0 3 0x04 0x3
+0 write_ram 0 3 0x1ff9c 0-3-is.txt
+0 cmd 0xc0000000

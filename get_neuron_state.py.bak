@@ -1,0 +1,99 @@
+"""
+    这是对 darwin 3.6.5 runtime api 的函数的修改 ，从而允许了一些地址寄存器的读取， 也包括权重 的读取
+"""
+
+
+def get_neuron_state(self, pop_name: str, state: list, offset=0):
+        """
+        从硬件获取神经元的状态，状态空间包括膜电位、权重和、推理参数、推理状态等，主要用于调试。
+        Args:
+            pop_name (str): 编译阶段的 Population Name
+            state (list): sequence[array]，包含一组或多组[神经元序号, [状态空间列表]]
+                   膜电位(vt) => "read", x, y, neuron_index+0x02000  按升序
+                   权重和(wgtsum) => "read", x, y, neuron_index+0x04000  按升序
+                   推理参数(inference_parameter) => "read", x, y, neuron_index+0x1E000(按升序)  0x1EFFF-neuron_index(按降序)
+                   推理状态(inference_status) => "read", x, y, neuron_index+0x1F000(按升序)  0x1FFFF-neuron_index(按降序)
+            offset (int): 用户指定的地址偏移
+        Returns:
+            None
+        """
+        if not self.log_debug:
+            logging.basicConfig(level=logging.DEBUG,  # 设置最低日志级别为 DEBUG
+                    format='%(asctime)s - %(levelname)s - %(message)s',  # 日志格式
+                    filename='app.log',  # 将日志输出到文件 app.log
+                    filemode='w')  # 'a'表示追加模式，'w'表示覆盖模式
+        self.log_debug = True
+        debug_from_east = False
+        debug_from_west = False
+        with open(self.neuron_path + pop_name +".json", "r") as f:
+            hidden_info = json.load(f)
+
+        with open(self.debug_path+'get_neuron_state_input.dwnc', 'w') as fwest,\
+            open(self.debug_path+'get_neuron_state_input_east.dwnc', 'w') as feast:
+            fwest.write('0 cmd 0xc0000001\n')
+            feast.write('0 cmd 0xc0000001\n')
+            for neu_idx, state_space in state:
+                if neu_idx < 100:
+                    targetlist = hidden_info[str(neu_idx)]
+                    x = targetlist[0]
+                    y = targetlist[1]
+                    neu_offset = targetlist[2]
+                else:
+                    x = 0
+                    y = 2
+                    neu_offset = neu_idx
+                for name in state_space:
+                    if name == 'vt':
+                        item = f"0 read {x} {y} {hex(neu_offset+0x02000)} 1\n"
+                    elif name == 'wgtsum0':
+                        item = f"0 read {x} {y} {hex(neu_offset+0x04000)} 1\n"
+                    elif name == 'wgtsum1':
+                        item = f"0 read {x} {y} {hex(neu_offset+0x05000)} 1\n"
+                    elif name == 'inference_parameter':
+                        item = f"0 read {x} {y} {hex(0x1EFFF-neu_offset)} 1\n"
+                    elif name == 'inference_status':
+                        item = f"0 read {x} {y} {hex(0x1FFFF-neu_offset)} 1\n" # 这个应该就是推理状态存储器
+                    elif name == 'learning_status':
+                        item = f"0 read {x} {y} {hex(0x1DFFF-neu_offset)} 1\n" # 这个应该就是学习状态存储器
+                    elif name == 'learning_status_dendrite':
+                        item = f"0 read {x} {y} {hex(0x1D000-neu_offset)} 1\n" # 这个应该就是学习状态存储器中对应的 树突的 位置， 从D000-6000 总共 2**15个树突
+                    elif name == 'npu_reg':
+                        print(offset)
+                        item = f"0 read {x} {y} {hex(0x00800 + offset)} 1\n" # 00800 是运行寄存器
+                    elif name == 'config_reg':
+                        print("yyyyyy")
+                        item = f"0 read {x} {y} {hex(0x00000 + offset)} 1\n" # 这个是配置寄存器
+                    elif name == 'dedr':
+                        item = f"0 read {x} {y} {hex(0x10000 + neu_offset)} 1\n" # 这个应该就是学习状态存储器
+                    else:
+                        print('error! not allowed %s', name)
+                    if x>=15:
+                        feast.write(item)
+                        debug_from_east = True
+                    else:
+                        fwest.write(item)
+                        debug_from_west = True
+                
+
+
+            fwest.write('0 cmd 0xc0000000\n')
+            feast.write('0 cmd 0xc0000000\n')
+        if debug_from_east == False:
+            os.remove(self.debug_path + 'get_neuron_state_input_east.dwnc')
+        else:
+            self.__flit_gen_east__(type="debug", input_file='get_neuron_state_input_east.dwnc', output_file='get_neuron_state_flitin_east')
+            self.__transmit_flit__(port=self.port[1], data_type=0x8000, fbin=self.debug_path+'get_neuron_state_flitin_east.bin', recv=True, recv_run_flit_file="get_neuron_state_recv_east",debug=True)
+            self.__run_parser__(recv_run_flit_file='get_neuron_state_recv_east', debug=True, pop_name=pop_name)
+
+        if debug_from_west == False:
+            os.remove(self.debug_path + 'get_neuron_state_input.dwnc')
+        else:
+            self.__flit_gen__(type="debug", input_file='get_neuron_state_input.dwnc', output_file='get_neuron_state_flitin')
+            self.__transmit_flit__(port=self.port[0], data_type=self.NORMAL_FLIT, fbin=self.debug_path+"get_neuron_state_flitin.bin", recv=True, recv_run_flit_file="get_neuron_state_recv",debug=True)
+            self.__run_parser__(recv_run_flit_file='get_neuron_state_recv', debug=True, pop_name=pop_name)
+        
+        debug_from_west == False
+        debug_from_east == False
+        self.log_debug = False
+
+        return

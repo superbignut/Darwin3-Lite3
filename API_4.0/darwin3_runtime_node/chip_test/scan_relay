@@ -1,0 +1,44 @@
+exep="python3 /home/root/scripts/flits_sender.py"
+exec=/home/root/scripts/flits_sender
+
+###########################################################################################
+# Reset Chip
+###########################################################################################
+function reset() {
+    source /home/root/scripts/restart_dma
+    $exec /home/root/chip_test/reset_clock/default_clock.bin
+    $exec /home/root/chip_test/reset_clock/pll_clock.bin
+}
+function init() {
+    $exec /home/root/chip_test/reset_clock/default_clock.bin
+    $exec /home/root/chip_test/reset_clock/pll_clock.bin
+}
+
+###########################################################################################
+# Relay Test
+###########################################################################################
+reset
+echo "--Relay Test--"
+# to east
+$exep /home/root/chip_test/relay_test/relay_east_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_east_test_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_test_read_flitin.bin 1
+sort flitout.txt | cksum
+# to west
+init
+$exep /home/root/chip_test/relay_test/relay_west_flitin.bin      1
+$exep /home/root/chip_test/relay_test/relay_west_test_flitin.bin 1
+$exep /home/root/chip_test/relay_test/relay_test_read_flitin.bin
+sort flitout.txt | cksum
+# north to south
+init
+$exep /home/root/chip_test/relay_test/relay_ns_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_ns_test_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_test_read_flitin.bin 1
+sort flitout.txt | cksum
+# south to north
+init
+$exep /home/root/chip_test/relay_test/relay_sn_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_sn_test_flitin.bin
+$exep /home/root/chip_test/relay_test/relay_test_read_flitin.bin 1
+sort flitout.txt | cksum

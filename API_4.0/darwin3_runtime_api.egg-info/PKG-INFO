@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: darwin3_runtime_api
+Version: 4.0.20241103
+Summary: Running API for darwin3.
+Author: YANG Yuhao, LI Longfei
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.8
+Requires-Dist: numpy

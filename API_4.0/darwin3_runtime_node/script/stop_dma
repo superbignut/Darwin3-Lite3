@@ -1,0 +1,5 @@
+/sbin/rmmod dma-proxy
+/sbin/rmmod dma-proxy1
+/sbin/rmmod dma-proxy2
+/sbin/rmmod dma-proxy3
+/sbin/rmmod dma-proxy4

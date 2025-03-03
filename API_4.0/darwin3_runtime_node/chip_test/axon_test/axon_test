@@ -1,0 +1,18 @@
+# check 1
+for i in {0..14}
+do
+    /home/root/chip_test/axon_test/run $i 1
+done
+for i in {15..23}
+do
+    /home/root/chip_test/axon_test/run_east $i 1
+done
+# check 0
+for i in {0..14}
+do
+    /home/root/chip_test/axon_test/run $i 0
+done
+for i in {15..23}
+do
+    /home/root/chip_test/axon_test/run_east $i 0
+done
