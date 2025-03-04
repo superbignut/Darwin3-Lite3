@@ -32,17 +32,19 @@ socket_port = 12345
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((host, socket_port))
 
+IMU_Touching = 1            # 抚摸 * 2
+IMU_Hit = 2                 # 拍打
 
 is_static = True
 def imu_callback(data, index): # 可以不断的获取 imu 数据的函数
     # 发布 x 值
-    global last_trigger_time, current_time, trigger_duration, is_static, client_socket
+    global last_trigger_time, current_time, trigger_duration, is_static, client_socket # , IMU_Touching, IMU_Hit
     
-    if index == 2:
+    """ if index == 2:
         if data.data == 1 or data.data == 6:
             is_static = True
         else:
-            is_static = False
+            is_static = False """
 
     if index == 1 and is_static == True:
         x = data.linear_acceleration.x

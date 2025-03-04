@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 """
 这个文件是用来 做 手势的初步测试的，因为以前一直是用 高翔的， 看看opencv 能不能做的简单一点
 """
-
 import cv2 as cv
 import numpy as np
 import struct
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # get raw video frame
     if Develop_Mode:
-        cap = cv.VideoCapture(0)
+        cap = cv.VideoCapture(0) # 这里测试了在狗上也能捕捉到
     # from Robot Dog
     else:
         cap = cv.VideoCapture("/dev/video0", cv.CAP_V4L2)
