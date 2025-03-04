@@ -35,7 +35,7 @@ sleep 2
 (
     echo "Starting color client..."
     cd client_video
-    /home/ysc/.local/bin/pipenv run python gesture.py & 
+    /home/ysc/.local/bin/pipenv run python client_video.py & 
 )
 
 # 启动 语音 客户端

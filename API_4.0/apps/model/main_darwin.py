@@ -353,6 +353,9 @@ class Gouzi:
             
             self.cmd = self.Sensor.Null
 
+    def cmd_plus_emotion(self):
+        # 将 命令 和 情感 融合后输出
+        pass
 
     def cmd_waiting_thread(self):
         # Gouzi 交互逻辑主线程
@@ -364,79 +367,89 @@ class Gouzi:
             # 4 期间如果有评价信号，则调节情感模型buffer
             # 5 期间如果有指令信号，则进入下一次指令周期
             # 6 倒计时结束
+            
+        """
+            实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
+
+            | 0     1     2    3      |   4    5   |  6     |  7     8     9   |   10    11   |  12    |  13    14    15  |
+            | 蓝    红    黑  表扬语义 |  批评  批评 | 酒精高  | 点赞  点踩   手掌 |  抚摸  抚摸  |   拍打  | 电低  电低  电低  |     
+        """
+        def _check_sensor_input(temp_ls):
+            # 传感器信号 检测 并转为 编码输入
+
+            # 颜色
+            if self.color == self.Sensor.Color_Blue:
+                temp_ls[0] = 1
+            elif self.color == self.Sensor.Color_Red:
+                temp_ls[1] = 1
+            elif self.color == self.Sensor.Color_Black:
+                temp_ls[2] = 1
+            
+            # 语义
+            if self.dmx == self.Sensor.Dmx_Positive:
+                temp_ls[3] = 1
+            elif self.dmx == self.Sensor.Dmx_Negative:
+                temp_ls[4] = 1
+                temp_ls[5] = 1
+
+            # 酒精
+            if self.alcohol == self.Sensor.Other_Alcohol:
+                temp_ls[6] = 1                    
+            
+            # 手势
+            if self.gesture == self.Sensor.Gesture_Like:
+                temp_ls[7] = 1
+            elif self.gesture == self.Sensor.Gesture_Dislike:
+                temp_ls[8] = 1
+            elif self.gesture == self.Sensor.Gesture_Palm:
+                temp_ls[9] = 1
+
+            # IMU
+            if self.imu == self.Sensor.IMU_Touching:
+                temp_ls[10] = 1
+                temp_ls[11] = 1
+            elif self.imu == self.Sensor.IMU_Hit:
+                temp_ls[12] = 1
+            
+            # 电量
+            if self.power == self.Sensor.Other_Power:
+                temp_ls[13] = 1
+                temp_ls[14] = 1
+                temp_ls[15] = 1
         
         while True:
             
             temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
-            
-            """
-                实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
 
-                | 0     1     2    3      |   4    5   |  6     |  7     8     9   |   10    11   |  12    |  13    14    15  |
-                | 蓝    红    黑  表扬语义 |  批评  批评 | 酒精高  | 点赞  点踩   手掌 |  抚摸  抚摸  |   拍打  | 电低  电低  电低  |     
-            """
-            def _check_sensor_input():
-                # 传感器信号 检测 并转为 编码输入
-
-                # 颜色
-                if self.color == self.Sensor.Color_Blue:
-                    temp_input[0] = 1
-                elif self.color == self.Sensor.Color_Red:
-                    temp_input[1] = 1
-                elif self.color == self.Sensor.Color_Black:
-                    temp_input[2] = 1
-                
-                # 语义
-                if self.dmx == self.Sensor.Dmx_Positive:
-                    temp_input[3] = 1
-                elif self.dmx == self.Sensor.Dmx_Negative:
-                    temp_input[4] = 1
-                    temp_input[5] = 1
-
-                # 酒精
-                if self.alcohol == self.Sensor.Other_Alcohol:
-                    temp_input[6] = 1                    
-                
-                # 手势
-                if self.gesture == self.Sensor.Gesture_Like:
-                    temp_input[7] = 1
-                elif self.gesture == self.Sensor.Gesture_Dislike:
-                    temp_input[8] = 1
-                elif self.gesture == self.Sensor.Gesture_Palm:
-                    temp_input[9] = 1
-
-                # IMU
-                if self.imu == self.Sensor.IMU_Touching:
-                    temp_input[10] = 1
-                    temp_input[11] = 1
-                elif self.imu == self.Sensor.IMU_Hit:
-                    temp_input[12] = 1
-                
-                # 电量
-                if self.power == self.Sensor.Other_Power:
-                    temp_input[13] = 1
-                    temp_input[14] = 1
-                    temp_input[15] = 1
-            
             if self.cmd != self.Sensor.Null:                                    # 如果有指令输入，从daerwin得到情感输出
                 
-                temp_input = np.array([temp_input * input_num_mul_index])       # 增加了一个维度  
+                _check_sensor_input(temp_ls=temp_input)                         # 传感器输入检测
+
+                print("current temp_input is:", temp_input)                     # 查看修改后的输入数据
+                
+                # continue
+                
+
+                """ temp_input = np.array([temp_input * input_num_mul_index])       # 增加了一个维度
 
                 temp_output = self.robot_net.step(data=temp_input, reward=1)    # 前向传播
 
+
+
                 print("temp_output is :",temp_output)
                 
-                temp_predict = self.robot_net.predict_with_no_assign_label_update(output=temp_output) # 得到预测
+                temp_predict = self.robot_net.predict_with_no_assign_label_update(output=temp_output) # 得到预测 """
 
-                print(temp_predict)
+                # print(temp_predict)
                 # Todo 补充
             
-            self.clear_sensor_status_with_lock()                                # 清除状态
+            self.clear_sensor_status_with_lock()                                    # 清除状态
 
             
 
     def client_handle_thread(self, client_socket):
         # 处理不同客户端上报的传感器数据，这里需要一个通信格式的定义
+        # 这里会不断更新各个 传感器状态 和 接收到的指令的状态
         """
             "COMMAND args1 args2"
 

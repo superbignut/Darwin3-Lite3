@@ -98,56 +98,27 @@ if __name__ == '__main__':
         bbox = human_RoI_mp.detect(frame)
         image = frame
         gestures = None
-        # find a person by MediaPipe human detection
+
         if bbox is not None:
-            # usually upper body RoI can be gotten
+
             upper_body_RoI = human_RoI_mp.get_upper_RoI() # 这里如果要使用全屏检测手势的话， 需要改成[[0,0],[640, 480]] 
-            # print("this is :", upper_body_RoI)
-            # time.sleep(1)
+
             gestures, area_list = hand_gesture.estimate(frame, upper_body_RoI)
-            # face_RoI_yunet.detect(frame, upper_body_RoI)
-            # face_RoI = face_RoI_yunet.get_face_RoI()
-            # mask_detector.detect(frame, face_RoI)
-            # print(bbox)
+
             cloth = human_RoI_mp.get_cloth_RoI()
-            # print(bbox)
+            
             if cloth is not None:
                 cloth = cloth.reshape(-1)
-                cv.rectangle(image, (int(cloth[0]), int(cloth[1])), (int(cloth[2]), int(cloth[3])), (0, 255, 0), 1) # 这里把人的位置画出来
 
-            image = hand_gesture.visualize(image) # 手势可视化 与连线
-        # if human detection can't find a person, try NanoDet # 另一种方法
-        """ else:
-            continue # 这里暂时先用一种方法
-            bbox = human_RoI_nano.detect(frame)
-            human_RoI = human_RoI_nano.get_human_RoI()
-            gestures, area_list = hand_gesture.estimate(frame, human_RoI) """
-            # face_RoI_yunet.detect(frame, human_RoI)
-            # face_RoI = face_RoI_yunet.get_face_RoI()
-            # mask_detector.detect(frame, face_RoI)
-
-        # visualize
-            
-        # image = mask_detector.visualize(image, "mask")
-
-        cv.imshow("Demo", image)
-        k = cv.waitKey(1)
-        if k == 113 or k == 81:  # q or Q to quit
-            if not Develop_Mode:
-                # controller.drive_dog("squat")
-                pass
-            cap.release()
-            cv.destroyWindow("Demo")
-            break
+        # cv.imshow("Demo", image)
 
         # control robot dog
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
             # only use the biggest area right hand
             idx = area_list.argmax()
-            gesture_buffer.insert(0, gestures[idx])
-            gesture_buffer.pop()
+            gesture_buffer.insert(0, gestures[idx]) # 
+            gesture_buffer.pop() # 每插入一个就要 pop一个
             # only if the gesture is the same 3 times, the corresponding command will be executed
-            if not Develop_Mode or (
-                    gesture_buffer[0] is not None and all(ges == gesture_buffer[0] for ges in gesture_buffer)):
-                # controller.drive_dog(gesture_buffer[0])
-                pass
+            if gesture_buffer[0] is not None and all(ges == gesture_buffer[0] for ges in gesture_buffer):
+                print(gesture_buffer[0])
+                

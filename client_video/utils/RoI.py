@@ -47,7 +47,7 @@ class RoIHumanDetMP:
         person_landmarks = self.person[4:-1].reshape(4, 2) # 这里就是 返回两个 坐标的
         shoulder_point = person_landmarks[2]
         hip_point = person_landmarks[0]
-        print("shoulder is ", shoulder_point, "hip is ", hip_point)
+        # print("shoulder is ", shoulder_point, "hip is ", hip_point)
 
         return self.__get_RoI((shoulder_point + hip_point) / 2, hip_point)
 
