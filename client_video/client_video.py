@@ -1,7 +1,13 @@
 """
     手势 、 衣服颜色 、 指令 检测的客户端代码
 
-    data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3)
+    data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3) 
+
+    # color
+
+    # gesture
+
+    # cmd
 
 """
 import cv2 as cv
@@ -157,7 +163,7 @@ if __name__ == '__main__':
                 
                 if _ratio > 8:  # 这个参数用来调节颜色的判定阈值
 
-                    data = "color " + str(max_color + 1) + " " + str(0) # 红1 蓝2 黑3 所以加一
+                    # data = "color " + str(max_color + 1) + " " + str(0) # 红1 蓝2 黑3 所以加一
                     
                     args1 = max_color + 1
 
@@ -190,7 +196,7 @@ if __name__ == '__main__':
         
         if args1 !=0 or args2 != 0 or args3 != 0: # 只要有一个参数有就发
             
-            data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3)
+            data = "video " + str(args1) + " " + str(args2) + " " + str(args3)
             client_socket.sendall(data.encode('utf-8'))
             # print(data)
             # time.sleep(0.5)

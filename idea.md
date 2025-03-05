@@ -345,3 +345,18 @@ Already_do:
     
     + export http_proxy=http://192.168.1.100:7890
     + export https_proxy=http://192.168.1.100:7890
+
+
+
+# 启动 语音 客户端
+(
+    
+    echo "Starting dmx client..."
+    # 由于dmx 的环境 在 ../show_file 中配好了，就不重新配了
+    cd ../show_file/                
+    # 这里 pyaudio 报权限的错误，好像是不能用 sudo 来运行，就只好切回用户 ysc
+    sudo -u ysc bash -c '
+        export http_proxy=http://192.168.1.100:7890
+        export https_proxy=http://192.168.1.100:7890
+        /home/ysc/.local/bin/pipenv run python client_dmx.py &'
+)

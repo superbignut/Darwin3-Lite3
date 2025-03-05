@@ -2,6 +2,18 @@
     这个文件相较于 main.py 目的在于把原来用  spaic 的网络传播 改成用 Darwin3 的完全替代 
 
     并增添了指令部分 修改了整个情感对四足机器人影响的方式
+
+    能成功启动一次挺不容易的
+
+    首先要把 darwin 的 ssh 跑通 这里会遇到的问题是 NX的网络总跳, 但是接上显示器等到 右上wifi不再闪烁 即为ok
+
+    其次是 麦克风的 ID 要先检测 再跑，再其次是 代理要配好
+
+    摄像头 和 imu 问题最小， cv 包装上了，大概率没问题了
+
+    电量的需要重新编译
+
+    酒精的也没啥问题
 """
 import os
 import sys
@@ -277,7 +289,7 @@ class Gouzi:
         self.power = self.Sensor.Null
         self.cmd = self.Sensor.Null
 
-        self.robot_net = Darwin_Net() # 情感模型网络
+        # self.robot_net = Darwin_Net() # 情感模型网络
         
         self.state_update_lock = threading.Lock() # 这个lock 使用来检测 狗的状态的更新的， 在检测线程 和 clear 线程中使用
 
@@ -425,6 +437,7 @@ class Gouzi:
                 
                 _check_sensor_input(temp_ls=temp_input)                         # 传感器输入检测
 
+                print("current cmd is: ", self.cmd)
                 print("current temp_input is:", temp_input)                     # 查看修改后的输入数据
                 
                 # continue
@@ -443,7 +456,9 @@ class Gouzi:
                 # print(temp_predict)
                 # Todo 补充
             
-            self.clear_sensor_status_with_lock()                                    # 清除状态
+            self.clear_sensor_status_with_lock()                                # 清除状态
+            
+            time.sleep(0.5)                                                     # 这里确实是要 等一下，相当于 每次留给 client_handle_thread 的传感器观察时间
 
             
 
@@ -465,47 +480,31 @@ class Gouzi:
                 data = client_socket.recv(1024)
                 if not data: 
                     continue 
-                if self.is_moving:                                      # 正在运动则跳过
+                if self.is_moving:                                                              # 正在运动则跳过
                     continue
                 
-                command, args1, args2 = data.decode('utf-8').split()    # 数据格式为 "COMMAND arg1 arg2"
+                command, args1, args2, args3 = data.decode('utf-8').split()                     # 数据格式为 "COMMAND arg1 arg2 args3"
                 
-                args1, args2 = int(args1), int(args2)                   # 转换为整数
+                args1, args2, args3 = int(args1), int(args2), int(args3)                        # 转换为整数
                 
-                print(f"Received command: {command}, args: {args1}, {args2}")
+                # print(f"Received command: {command}, args: {args1}, {args2}, {args3}")
 
                 with self.state_update_lock:  # 修改状态 上锁
-                    if command == "gesture":
+                    if command == "video":
 
-                        if 1 <= args1 <= self.Sensor.GESTURE_NUM:         
-                            self.gesture = args1
-                        else:
-                            self.gesture = self.Sensor.Null
+                        if args1 != 0:
+                            self.color = args1
 
-                        if 1 <= args2 <= self.Sensor.CMD_NUM:
-                            self.cmd = args2
-                        else:
-                            self.cmd = self.Sensor.Null
+                        if args2 != 0:
+                            self.gesture = args2
+
+                        if args3 != 0:
+                            self.cmd = args3
 
                     elif command == "imu":
 
-                        if 1 <= args1 <= self.Sensor.IMU_NUM:         
+                        if args1 != 0:
                             self.imu = args1
-                        else:
-                            self.imu = self.Sensor.Null
-
-                    elif command == "color":
-                        if 1 <= args1 <= self.Sensor.COLOR_NUM:         
-                            self.color = args1
-                        else:
-                            self.color = self.Sensor.Null
-
-
-                    elif command == "alcohol":
-                        if args1 == self.Sensor.Other_Alcohol:         
-                            self.alcohol = args1
-                        else:
-                            self.alcohol = self.Sensor.Null
 
                     elif command == "alcohol":
                         if args1 == self.Sensor.Other_Alcohol:         
@@ -520,15 +519,12 @@ class Gouzi:
                             self.power = self.Sensor.Null
 
                     elif command == "dmx":
-                        if 1 <= args1 <= self.Sensor.DMX_NUM:         
-                            self.dmx = args1
-                        else:
-                            self.dmx = self.Sensor.Null
+                        if args1 != 0:         
+                            self.cmd = args1
 
-                        if 1 <= args2 <= self.Sensor.CMD_NUM:
-                            self.cmd = args2
-                        else:
-                            self.cmd = self.Sensor.Null
+                        if args2 != 0:
+                            self.dmx = args2
+                        
                     
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info() # 返回报错信息

@@ -1,5 +1,11 @@
 """
-    final版的语音输入, 测试没有server 的时候
+    data = "dmx " + str(args1) + " " + str(args2) + " " + str(args3)
+
+    args1 指令 
+
+    args2 语义
+
+    args3 null
 """
 
 import pyaudio
@@ -147,17 +153,23 @@ def flow_record():
 
     frames = []
     cnt = 0 # 用于标记这是第几个交给大模型的音频
+    args1 = 0   # socket 第一个参数
+    args2 = 0   # socket 第二个参数
+    args3 = 0   # socket 第三个参数
 
     # 录制音频
     print("开始录音...")
     while(True):
+
+
+
         data = stream.read(CHUNK) # 录1个chunk
 
         data_int = np.abs(np.frombuffer(data, dtype=np.int16))
         # print(len(data), len(data_int)) 由于数据是16位，因此data的len是 8192 的double
         max_data_int = np.max(data_int)
         
-        print("max is: ", max_data_int)
+        # print("max is: ", max_data_int)
 
         if RECORD_STATE == RECORD_STATE_DICT['Waiting_Input']:
             print("waiting for input...")
@@ -194,23 +206,46 @@ def flow_record():
                 frames.clear() # 数据列表清空
 
                 text = baidu_wav_to_words(file_name=wf_name) # 百度转文字
-
-                text  = "你是我的一个喜欢吃肉、不喜欢吃菜的宠物小狗，从下面三种选择中做出回答，1是的，2不是，3其他， 只需要用编号1或2或3来回答我:" + text
-                print(text)
-                web_text = dmx_api(input_txt=text) # 
-                print(web_text)
-                if web_text == "1":
-                    print("yes")
-                    data = "dmx " + "1 0"  
-                    # client_socket.sendall(data.encode('utf-8'))
-
-                elif web_text == "2":
-                    print("no")
-                    data = "dmx " + "2 0"  
-                    # client_socket.sendall(data.encode('utf-8'))
+                
+                if "起来" in text:
+                    print("######### stand up!!!")
+                    args1 = Cmd_StandUp
+                elif "趴下" in text:
+                    print("######### lie down!!!")
+                    args1 = Cmd_LieDown
+                elif "过来" in text:
+                    print("######### lie down!!!")
+                    args1 = Cmd_GoAhead
                 else:
-                    print("puzzled")
-                cnt += 1
+                    print(text)
+                    text  = "你是我的宠物小狗,判断下面这句话是属于哪一类? 1表扬我、2批评我、3与我无关。用编号回答: " + text
+                    
+                    web_text = dmx_api(input_txt=text) # 
+                    print(web_text)
+                    if web_text == "1":
+                        print("yes")
+                        # data = "dmx " + "1 0"  
+                        # client_socket.sendall(data.encode('utf-8'))
+                        args2 = Dmx_Positive
+
+                    elif web_text == "2":
+                        print("no")
+                        # data = "dmx " + "2 0"  
+                        # client_socket.sendall(data.encode('utf-8'))
+                        args2 = Dmx_Negative
+                    else:
+                        print("puzzled")
+                    cnt += 1
+                if args1 != 0 or args2 != 0:
+                    data = "dmx " + str(args1) + " " + str(args2) +  " 0" # 第三个参数总是0
+                    # client_socket.sendall(data.encode('utf-8'))
+                    print(data)
+                    
+                    # 清空
+                    args1 = 0   # socket 第一个参数
+                    args2 = 0   # socket 第二个参数
+                    args3 = 0   # socket 第三个参数
+
                 RECORD_STATE = RECORD_STATE_DICT["Waiting_Input"]
 
 

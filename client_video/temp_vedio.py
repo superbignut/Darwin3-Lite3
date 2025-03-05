@@ -158,8 +158,8 @@ if __name__ == '__main__':
                 # time.sleep(0.4)
                 # cv.rectangle(image, (int(cloth[0]), int(cloth[1])), (int(cloth[2]), int(cloth[3])), (0, 255, 0), 1)
 
-        cv.imshow("Demo", image)
-        k = cv.waitKey(1) # 画图必备
+        # cv.imshow("Demo", image)
+        # k = cv.waitKey(1) # 画图必备
         # control robot dog
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
             # only use the biggest area right hand

@@ -8,11 +8,11 @@ echo "Gouzi start..."
 set -e
 
 # 配置 darwin ip 地址
-ifconfig usb1 172.31.111.31/24
+# ifconfig usb1 172.31.111.31/24
 
 echo "Connecting darwin3 runtime..."
 
-ssh root@172.31.111.35 "darwin3_runtime_server.py &" ||  { echo "SSH command failed"; exit 1; }
+# ssh root@172.31.111.35 "darwin3_runtime_server.py &" ||  { echo "SSH command failed"; exit 1; }
 
 
 sleep 2

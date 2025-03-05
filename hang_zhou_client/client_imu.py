@@ -71,7 +71,7 @@ def imu_callback(data, index): # 可以不断的获取 imu 数据的函数
                 last_trigger_time = current_time
                 # subprocess.Popen("/home/ysc/.pyenv/shims/python3 /home/ysc/ltl/youhuairen_kuaipao.py", shell=True)
 
-                data = "imu " + "2 0"  # 2 敲打
+                data = "imu " + "2 0 0"  # 2 敲打
                 client_socket.sendall(data.encode('utf-8'))
                 
             elif temp_average_x > 1.0 or temp_average_y > 1.2: # 这里的 坐下的时候， 加速度还要重新标定以前是1.2和1.4
@@ -80,7 +80,7 @@ def imu_callback(data, index): # 可以不断的获取 imu 数据的函数
                 last_trigger_time = current_time
                 # subprocess.Popen("/home/ysc/.pyenv/shims/python3 /home/ysc/ltl/shishei_zaimowo.py", shell=True)
 
-                data = "imu " + "1 0"  #  1 表示 抚摸
+                data = "imu " + "1 0 0"  #  1 表示 抚摸
                 client_socket.sendall(data.encode('utf-8'))
             
 
