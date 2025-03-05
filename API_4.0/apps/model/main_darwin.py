@@ -253,17 +253,17 @@ class Gouzi:
         Other_Power = 1             # 电量低 * 3
         Other_Alcohol = 1           # 酒精浓度高
 
-        Gesture_Like = 1            # 点赞手势
-        Gesture_Dislike = 2         # 点踩手势
-        Gesture_Palm = 3            # 手掌手势
+        Gesture_Like = 4            # 点赞手势
+        Gesture_Dislike = 5         # 拳头手势
+        Gesture_Palm = 6            # 手掌手势
 
         # 总体输入编码的维度是 16, 除此之外，下面的信号被用来作为四足机器人的指令变量
 
-        Cmd_LieDown = 1             # 趴下指令
-        Cmd_StandUp = 2             # 站起来指令
-        Cmd_GoAhead = 3             # 向前走指令
-        Cmd_GoBack = 4              # 向后走指令
-        Cmd_Woof = 5                # 往往叫指令
+        Cmd_LieDown = 7             # 趴下指令
+        Cmd_StandUp = 8             # 站起来指令
+        Cmd_GoAhead = 9             # 向前走指令
+        Cmd_GoBack = 10             # 向后走指令
+        Cmd_Woof = 11               # 往往叫指令
         
         # Todo 当然还有更多样的指令，扭一扭、跟随之类的，先不弄
 
