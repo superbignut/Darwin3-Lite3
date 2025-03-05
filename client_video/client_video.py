@@ -1,39 +1,52 @@
-# -*- coding: utf-8 -*-
 """
-这个文件是用来 做 手势的初步测试的，因为以前一直是用 高翔的， 看看opencv 能不能做的简单一点
+    手势 、 衣服颜色 、 指令 检测的客户端代码
+
+    data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3)
+
 """
 import cv2 as cv
 import numpy as np
 import struct
 import threading
 import time
-
+import os 
+import sys
 from opencv_zoo.models.person_detection_mediapipe.mp_persondet import MPPersonDet
-# from opencv_zoo.models.object_detection_nanodet.nanodet import NanoDet
-# from opencv_zoo.models.face_detection_yunet.yunet import YuNet
 from opencv_zoo.models.palm_detection_mediapipe.mp_palmdet import MPPalmDet
 from opencv_zoo.models.handpose_estimation_mediapipe.mp_handpose import MPHandPose
 
-from utils.RoI import RoIHumanDetMP # , RoIObjDetNano, RoIFaceDetYuNet
+from utils.RoI import RoIHumanDetMP
 from utils.HandGesture import HandGesture
-# from Controller import Controller
-from utils.ColorDetection import ColorDetection
+import socket
 
-Develop_Mode = True  # True means use computer camera. False means use dog camera
+host = '192.168.1.103'
+socket_port = 12345
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, socket_port))
+
+# socket 第一个参数
+Color_Red = 1               # 红颜色
+Color_Blue = 2              # 蓝颜色
+Color_Black = 3             # 黑颜色
+
+# socket 第二个参数
+Gesture_Like = 4            # 点赞手势 
+Gesture_Dislike = 5         # 点踩手势 / 拳头 0 
+Gesture_Palm = 6            # 手掌手势 5 
+
+# socket 第三个参数
+Cmd_LieDown = 7             # 趴下指令 1 
+Cmd_StandUp = 8             # 站起来指令 2
+Cmd_GoAhead = 9             # 向前走指令 3
+Cmd_GoBack = 10             # 向后走指令 4
+Cmd_Woof = 11               # 往往叫指令 
+
+
 
 if __name__ == '__main__':
 
-    # get raw video frame
-    if Develop_Mode:
-        cap = cv.VideoCapture(0) # 这里测试了在狗上也能捕捉到
-    # from Robot Dog
-    else:
-        cap = cv.VideoCapture("/dev/video0", cv.CAP_V4L2)
-        # cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
-        # cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap = cv.VideoCapture(0) # 这里测试了在狗上也能捕捉到
 
-
-    # try to use CUDA
     if cv.cuda.getCudaEnabledDeviceCount() != 0:
         backend = cv.dnn.DNN_BACKEND_CUDA
         target = cv.dnn.DNN_TARGET_CUDA
@@ -50,20 +63,7 @@ if __name__ == '__main__':
         topK=1,  # just only one person
         backendId=backend,
         targetId=target)
-    # nano detector
-    """     human_detector_nano = NanoDet(
-        modelPath='utils/object_detection_nanodet_2022nov.onnx',
-        prob_threshold=0.5,
-        iou_threshold=0.6,
-        backend_id=backend,
-        target_id=target) """
-    # face detector
-    """     face_detector = YuNet(modelPath='utils/face_detection_yunet_2023mar.onnx',  # 2022-> 2023
-                          confThreshold=0.6,  # lower to make sure mask face can be detected
-                          nmsThreshold=0.3,
-                          topK=5000,  # only one face
-                          backendId=backend,
-                          targetId=target) """
+
     # palm detector
     palm_detector = MPPalmDet(
         modelPath='utils/palm_detection_mediapipe_2023feb.onnx',
@@ -80,16 +80,30 @@ if __name__ == '__main__':
         targetId=target)
 
     human_RoI_mp = RoIHumanDetMP(human_detector_mp) # 这两个都是检测人体 先用一个
-    # human_RoI_nano = RoIObjDetNano(human_detector_nano)
-
-
-    # face_RoI_yunet = RoIFaceDetYuNet(face_detector)
+    
+    
     hand_gesture = HandGesture(palm_detector, handpose_detector) # 这个使用 mediapipe 检测手势
-    # mask_detector = ColorDetection(np.array([86, 28, 141]), np.array([106, 128, 225]))
+    
+    
+    gesture_buffer = [None] * 3 # 手势判定 阈值调节 出现多少次被算作成功
 
-    # gesture will be recognized only if the gesture is the same 2 times in a row
-    gesture_buffer = [None] * 3
+    pixels_buffer = np.zeros(3) 
+
+    lower_red = np.array([100, 0, 0])   # 红色的最低范围
+    upper_red = np.array([255, 80, 80]) # 红色的最高范围
+
+    lower_blue = np.array([100, 150, 0])
+    upper_blue = np.array([140, 255, 255])
+
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([180, 255, 30])
+
+
     while True:
+        args1 = 0   # socket 第一个参数
+        args2 = 0   # socket 第二个参数
+        args3 = 0   # socket 第三个参数
+        
         ret, frame = cap.read()
         if ret is None or not ret:
             continue
@@ -99,26 +113,85 @@ if __name__ == '__main__':
         image = frame
         gestures = None
 
-        if bbox is not None:
+        if bbox is not None: # 其实这个人体检测 ，如果没有的话，似乎会更快一点
 
-            upper_body_RoI = human_RoI_mp.get_upper_RoI() # 这里如果要使用全屏检测手势的话， 需要改成[[0,0],[640, 480]] 
+            upper_body_RoI = human_RoI_mp.get_full_RoI() # 这里如果要使用全屏检测手势的话， 需要改成[[0,0],[640, 480]] 
 
             gestures, area_list = hand_gesture.estimate(frame, upper_body_RoI)
+            # print(gestures, "1111") # gestures 是字符串的列表
 
             cloth = human_RoI_mp.get_cloth_RoI()
+            # print(cloth)
             
             if cloth is not None:
-                cloth = cloth.reshape(-1)
+                        
+                # 重塑cloth为(2, 2)并确保为整数
+                cloth = cloth.reshape(-1).astype(int)
+                x1, y1, x2, y2 = cloth
+                # print(x1, y1, x2, y2)
+                
+                # 提取布料的RoI
+                cloth_image = frame[y1:y2, x1:x2]
+    
+                # 将RoI转换为HSV颜色空间
+                image_rgb = cv.cvtColor(cloth_image, cv.COLOR_BGR2RGB)
+    
+                # 创建掩码
+                red_mask = cv.inRange(image_rgb, lower_red, upper_red) # 在范围内的是255 其余变成0
+                blue_mask = cv.inRange(image_rgb, lower_blue, upper_blue) # 在范围内的是255 其余变成0
+                black_mask = cv.inRange(image_rgb, lower_black, upper_black) # 在范围内的是255 其余变成0
 
-        # cv.imshow("Demo", image)
+                # 计算红色区域的像素数量
+                pixels_buffer[0] = cv.countNonZero(red_mask) # 计算非零区域
+                pixels_buffer[1] = cv.countNonZero(blue_mask)
+                pixels_buffer[2] = cv.countNonZero(black_mask)
 
-        # control robot dog
+                # 计算总像素数量
+                total_pixels = image_rgb.shape[0] * image_rgb.shape[1] # 统计总像素数
+
+                # 最大颜色编号
+                max_color = pixels_buffer.argmax()
+                
+                # 计算最大颜色的占比
+                _ratio = pixels_buffer[max_color] * 5 *100 // total_pixels # 多乘了5 作为放大系数 
+                
+                if _ratio > 8:  # 这个参数用来调节颜色的判定阈值
+
+                    data = "color " + str(max_color + 1) + " " + str(0) # 红1 蓝2 黑3 所以加一
+                    
+                    args1 = max_color + 1
+
+
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
             # only use the biggest area right hand
             idx = area_list.argmax()
             gesture_buffer.insert(0, gestures[idx]) # 
             gesture_buffer.pop() # 每插入一个就要 pop一个
-            # only if the gesture is the same 3 times, the corresponding command will be executed
+            
             if gesture_buffer[0] is not None and all(ges == gesture_buffer[0] for ges in gesture_buffer):
-                print(gesture_buffer[0])
                 
+                # 下面是指令手势
+                if gesture_buffer[0] == 'one':
+                    args3 = Cmd_LieDown
+                elif gesture_buffer[0] == 'two':
+                    args3 = Cmd_StandUp
+                elif gesture_buffer[0] == 'three':
+                    args3 = Cmd_GoAhead
+                elif gesture_buffer[0] == 'four':
+                    args3 = Cmd_GoBack
+                
+                # 下面是非指令手势
+                elif gesture_buffer[0] == 'like':
+                    args2 = Gesture_Like
+                elif gesture_buffer[0] == 'zero':
+                    args2 = Gesture_Dislike
+                elif gesture_buffer[0] == 'five':
+                    args2 = Gesture_Palm
+        
+        if args1 !=0 or args2 != 0 or args3 != 0: # 只要有一个参数有就发
+            
+            data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3)
+            client_socket.sendall(data.encode('utf-8'))
+            # print(data)
+            # time.sleep(0.5)
+# 给models 加了一个init

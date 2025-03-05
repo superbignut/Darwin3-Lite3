@@ -153,39 +153,54 @@ class HandGesture:
         angle_list = self.__hand_angle(hand)
         thumbOpen, firstOpen, secondOpen, thirdOpen, fourthOpen = self.__finger_status(hand)
 
-        # squat
+        # 3
         if (angle_list[0] > thr_angle_thumb) and (angle_list[1] > thr_angle) and (
                 angle_list[2] < thr_angle) and (angle_list[3] < thr_angle) and (angle_list[4] < thr_angle) and \
                 not firstOpen and secondOpen and thirdOpen and fourthOpen:
-            gesture_str = "squat"
-        # turning
-        elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] < thr_angle_s) and (
-                angle_list[2] > thr_angle) and (
-                angle_list[3] < thr_angle_s) and (angle_list[4] < thr_angle) and \
-                firstOpen and not secondOpen and thirdOpen and fourthOpen:
-            gesture_str = "turning"
-        # twisting
+            gesture_str = "three"
+
+            """         # turning
+            elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] < thr_angle_s) and (
+                    angle_list[2] > thr_angle) and (
+                    angle_list[3] < thr_angle_s) and (angle_list[4] < thr_angle) and \
+                    firstOpen and not secondOpen and thirdOpen and fourthOpen:
+                gesture_str = "turning" """
+            
+        # like
         elif (angle_list[0] < thr_angle_thumb) and (angle_list[1] > thr_angle) and (
                 angle_list[2] > thr_angle) and (
                 angle_list[3] > thr_angle) and (angle_list[4] > thr_angle) and \
                 thumbOpen and not firstOpen and not secondOpen and not thirdOpen and not fourthOpen:
-            gesture_str = "twisting"
-        # forward
+            gesture_str = "like"
+        # 1
+        elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] < thr_angle_s) and (
+                angle_list[2] > thr_angle_s) and (
+                angle_list[3] > thr_angle) and (angle_list[4] > thr_angle) and \
+                not thumbOpen and firstOpen and not secondOpen and not thirdOpen and not fourthOpen:
+            gesture_str = "one"
+        # 2
         elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] < thr_angle_s) and (
                 angle_list[2] < thr_angle_s) and (
                 angle_list[3] > thr_angle) and (angle_list[4] > thr_angle) and \
                 not thumbOpen and firstOpen and secondOpen and not thirdOpen and not fourthOpen:
-            gesture_str = "forward"
-        # back
+            gesture_str = "two"
+        # 5
         elif (angle_list[0] < thr_angle_s) and (angle_list[1] < thr_angle_s) and (
                 angle_list[2] < thr_angle_s) and (
                 angle_list[3] < thr_angle_s) and (angle_list[4] < thr_angle_s) and \
                 thumbOpen and firstOpen and secondOpen and thirdOpen and fourthOpen:
-            gesture_str = "back"
-        # stop
+            gesture_str = "five"
+        # 4
         elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] < thr_angle_s) and (
                 angle_list[2] < thr_angle_s) and (
                 angle_list[3] < thr_angle_s) and (angle_list[4] < thr_angle_s) and \
                 not thumbOpen and firstOpen and secondOpen and thirdOpen and fourthOpen:
-            gesture_str = "stop"
+            gesture_str = "four"
+
+        # 0
+        elif (angle_list[0] > thr_angle_thumb) and (angle_list[1] > thr_angle_s) and (
+                angle_list[2] > thr_angle_s) and (
+                angle_list[3] > thr_angle) and (angle_list[4] > thr_angle) and \
+                not thumbOpen and not firstOpen and not secondOpen and not thirdOpen and not fourthOpen:
+            gesture_str = "zero"
         return gesture_str
