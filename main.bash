@@ -8,12 +8,12 @@ echo "Gouzi start..."
 set -e
 
 # 配置 darwin ip 地址
-# ifconfig usb1 172.31.111.31/24
+ifconfig usb1 172.31.111.31/24
 
 echo "Connecting darwin3 runtime..."
 
 # ssh root@172.31.111.35 "darwin3_runtime_server.py &" ||  { echo "SSH command failed"; exit 1; }
-
+# 达尔文这里 还是去手动开一下吧，要不然还是会出问题
 
 sleep 2
 
@@ -23,6 +23,7 @@ sleep 2
     sleep 16
 )
 
+exit 0
 
 # 启动 imu 客户端
 (

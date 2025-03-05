@@ -118,21 +118,24 @@ class Darwin_Net():
         return board
 
     def ysc_darwin_step(self, input_ls):
-        # 一个时间步周期的运行， 输入数据维度 1 * 256
-        # 返回脉冲输出情况 维度 1 * 256
+        # 一个时间步周期的运行， 输入数据维度 1 * 256，也即需要 [[1,2,3,4,...]] 这种
+        # 返回脉冲输出，维度与输入一致 1 * 256
+        # 最外层似乎的一层没什么用，只是和 pytorch 的历史一致
         ls = np.zeros(100,)
+        print("input ls is: ", input_ls)
         for _ in range(self.time_step):
             a = self.input_func(input_ls)
+            # print("a is: ", a)
             out = self.board.run_darwin3_withoutfile(spike_neurons=[a])
-
+            # print("out is:", out)   
             for i in range(len(out[0])):
                 index = out[0][i][1]
                 ls[index] += 1
-        print(ls.nonzero())
-        print(ls[ls.nonzero()])
-        return np.array([ls])  # 
+        # print(ls.nonzero())
+        # print(ls[ls.nonzero()])
+        return np.array(ls.nonzero())  # 
 
-    def input_func(self, input_ls, unit_conversion=0.8, dt=0.1):# 这连个参数对标spaic的possion_encoder
+    def input_func(self, input_ls, unit_conversion=0.6, dt=0.1):# 这连个参数对标spaic的possion_encoder
         # 这里改成 numpy 的输入, 输入维度 1 * input_node_num
         # 返回 一个 list 也即发放脉冲的神经元编号
         a = (np.random.rand(*input_ls.shape) < input_ls * unit_conversion * dt)
@@ -141,9 +144,11 @@ class Darwin_Net():
 
 
     def step(self, data, reward=1): 
-        # 对接到 darwin
+        # 对接 darwin 
         # Todo reward 暂未使用
         return self.ysc_darwin_step(data)
+    
+
     
     def new_check_label_from_data(self, data):
         # 这里暗含了优先级的概念在里面, 但要是能真正影响 情绪输出的还得是 权重
@@ -289,7 +294,7 @@ class Gouzi:
         self.power = self.Sensor.Null
         self.cmd = self.Sensor.Null
 
-        # self.robot_net = Darwin_Net() # 情感模型网络
+        self.robot_net = Darwin_Net() # 情感模型网络
         
         self.state_update_lock = threading.Lock() # 这个lock 使用来检测 狗的状态的更新的， 在检测线程 和 clear 线程中使用
 
@@ -301,6 +306,21 @@ class Gouzi:
 
         self.is_moving = False
 
+    def test_darwin(self):
+        
+        temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
+
+        temp_input[1] = 1 
+        temp_input[3] = 1
+        temp_input[2] = 1
+        temp_input[4] = 1
+
+        temp_input = np.array([np.tile(temp_input, input_num_mul_index)])       # 增加了一个维度
+
+        temp_output = self.robot_net.step(data=temp_input)          # 前向传播
+
+        print("output is : ", temp_output)
+
     
     def action_socket_init(self):
         # 运动主机初始化、创建运动控制器、建立心跳
@@ -309,7 +329,7 @@ class Gouzi:
 
         self.controller.heart_exchange_init() # 初始化心跳
         time.sleep(2)
-        self.controller.stand_up()
+        # self.controller.stand_up() # 不站起来
         print('stand_up')
         # pack = struct.pack('<3i', 0x21010202, 0, 0)
         # controller.send(pack) # 
@@ -546,6 +566,10 @@ if __name__ == "__main__":
     # 这个文件需要在 API_4.0 外面执行
     # ysc_darwin_init()
     xiaobai = Gouzi()
-    xiaobai.start()
+    xiaobai.test_darwin()
+    xiaobai.test_darwin()
+    xiaobai.test_darwin()
+    # xiaobai.start()
+
 
 

@@ -20,3 +20,17 @@ time.sleep(2)
 board.deploy_config()
 
 time.sleep(1)
+
+
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))
+print(board.run_darwin3_withoutfile(spike_neurons=[[0,1,2,3,4]]))

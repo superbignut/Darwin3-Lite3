@@ -360,3 +360,14 @@ Already_do:
         export https_proxy=http://192.168.1.100:7890
         /home/ysc/.local/bin/pipenv run python client_dmx.py &'
 )
+
+
++ Already do
+  + bash启动脚本 写了，但还是有一些前置部署需要手打
+  + 衣服颜色 和 手势 的也都改了
+  + daerwin 用 numpy 重写和测试了 这里发现的问题是 np 的复制 需要 用 tile 函数
+  + 客户端、服务端也都对齐了
+
++ Todo
+  + 把模型重新训练一下， 然后在狗上能够测试出 正确的输出
+  + 指令的交互逻辑 也要写一下的 cmd_waiting_thread
