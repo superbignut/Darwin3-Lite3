@@ -143,7 +143,7 @@ class Darwin_Net():
         return np.nonzero(a[0].astype(int))[0]
 
 
-    def step(self, data, reward=1): 
+    def run(self, data, reward=1): 
         # 对接 darwin 
         # Todo reward 暂未使用
         return self.ysc_darwin_step(data)
@@ -307,7 +307,8 @@ class Gouzi:
         self.is_moving = False
 
     def test_darwin(self):
-        
+        # 这个函数是用来测试达尔文的 输入和 输出的函数
+        # 实际不使用
         temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
 
         temp_input[1] = 1 
@@ -317,7 +318,7 @@ class Gouzi:
 
         temp_input = np.array([np.tile(temp_input, input_num_mul_index)])       # 增加了一个维度
 
-        temp_output = self.robot_net.step(data=temp_input)          # 前向传播
+        temp_output = self.robot_net.run(data=temp_input)          # 前向传播
 
         print("output is : ", temp_output)
 
@@ -329,7 +330,7 @@ class Gouzi:
 
         self.controller.heart_exchange_init() # 初始化心跳
         time.sleep(2)
-        # self.controller.stand_up() # 不站起来
+        self.controller.stand_up() # 站起来
         print('stand_up')
         # pack = struct.pack('<3i', 0x21010202, 0, 0)
         # controller.send(pack) # 
@@ -385,8 +386,15 @@ class Gouzi:
             
             self.cmd = self.Sensor.Null
 
-    def cmd_plus_emotion(self):
+    def cmd_plus_emotion(self, cmd, emo):
+
         # 将 命令 和 情感 融合后输出
+        pass
+
+    def _check_emotion_input(self):
+        
+        # 这里对有明显情感导向的动作 进行检测， 如果有的话，对应的式后续的情感调节
+
         pass
 
     def cmd_waiting_thread(self):
@@ -453,28 +461,32 @@ class Gouzi:
             
             temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
 
-            if self.cmd != self.Sensor.Null:                                    # 如果有指令输入，从daerwin得到情感输出
-                
-                _check_sensor_input(temp_ls=temp_input)                         # 传感器输入检测
+            if self.cmd != self.Sensor.Null:                                    
+                # 如果有指令输入，从darwin得到情感输出， 进而机器狗动作输出
+
+                _check_sensor_input(temp_ls=temp_input)                             # 传感器输入检测
 
                 print("current cmd is: ", self.cmd)
-                print("current temp_input is:", temp_input)                     # 查看修改后的输入数据
+                print("current temp_input is:", temp_input)                         # 查看修改后的输入数据
                 
-                # continue
+                temp_input = np.array([np.tile(temp_input, input_num_mul_index)])   # 输入维度扩充，第二种扩充
                 
+                temp_emotion = self.robot_net.run(data=temp_input)                  # 情感输出
 
-                """ temp_input = np.array([temp_input * input_num_mul_index])       # 增加了一个维度
-
-                temp_output = self.robot_net.step(data=temp_input, reward=1)    # 前向传播
-
-
-
-                print("temp_output is :",temp_output)
+                self.cmd_plus_emotion(cmd=self.cmd, emo=temp_emotion)               # 这里进行的动作输出
                 
-                temp_predict = self.robot_net.predict_with_no_assign_label_update(output=temp_output) # 得到预测 """
+            
+            else:
+                
+                # 这里其实没有必要 做一个 时间窗口， 直接对有明确感情的动作也做一个 if 进入
+                
+                emo_input = self._check_emotion_input() # 检测到的具有明显情感倾向的输入
 
-                # print(temp_predict)
-                # Todo 补充
+                if emo_input != None:
+                    # 如果有明确的情感输入, 没有指令就只迭代情感变化
+
+                    pass
+                # 调节 buffer
             
             self.clear_sensor_status_with_lock()                                # 清除状态
             
@@ -566,10 +578,10 @@ if __name__ == "__main__":
     # 这个文件需要在 API_4.0 外面执行
     # ysc_darwin_init()
     xiaobai = Gouzi()
-    xiaobai.test_darwin()
-    xiaobai.test_darwin()
-    xiaobai.test_darwin()
-    # xiaobai.start()
+    # xiaobai.test_darwin()
+    # xiaobai.test_darwin()
+    # xiaobai.test_darwin()
+    xiaobai.start()
 
 
 
