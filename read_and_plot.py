@@ -108,13 +108,13 @@ def main():
                     
                     
                         # print(temp_re.group(1), weight.group(1))
-def inner_plot_func(weight):
+def inner_plot_func(weight, _vmax=256):
 
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     fig, ax = plt.subplots(figsize=(5,5))
 
-    im = ax.imshow(weight, cmap='hot_r', vmin=0, vmax=256)
+    im = ax.imshow(weight, cmap='hot_r', vmin=0, vmax=_vmax)
     div = make_axes_locatable(ax)
     cax = div.append_axes("right", size="5%", pad=0.05)
 
@@ -126,8 +126,19 @@ def inner_plot_func(weight):
     fig.tight_layout()
     plt.show()
 
+w_before_quant = None
 w_before_darwin  = None 
 w_after_darwin = None 
+
+# 画出量化前的权重 ，这里的 热力图 的标注值不与后两个太一样
+def plot_weight_before_quant():
+    global w_before_quant
+    temp_w = torch.load(r"_parameters_dict_600.pt")['autoname1<net>_connection1<con>:autoname1<net>_layer1<neg><-autoname1<net>_input<nod>:{weight}']
+    print(torch.max(temp_w))
+    w_before_quant = temp_w.detach().cpu().numpy()
+    w_before_quant = w_before_quant.reshape(10, 10, 16, 16).transpose(0, 2, 1, 3).reshape(160, 160)
+    inner_plot_func(weight=w_before_quant, _vmax=0.6)
+
 # 加载量化后的权重
 def plot_weight_func():
     global w_before_darwin
@@ -175,6 +186,8 @@ if __name__ == '__main__':
     
     sort_applog() # 把log 排序
     main() # 把权重转换 weight_file_path 文件中
+
+    plot_weight_before_quant()
 
     plot_weight_func() # 画量化 的权重 
     darwin_plot_weight_func() # 画出从darwin 读出来的权重

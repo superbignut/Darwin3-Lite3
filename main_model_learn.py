@@ -161,7 +161,7 @@ def quant():
     quant_obj = Symmetric_Quantize(Symmetric_Quantize.Target_Precision.INT8) # 量化权重
 
 
-    weight_value = torch.load(r'C:\Users\bignuts\Desktop\ZJU\hang_zhou\alcohol\hang_zhou_spaic\save_600\real_ysc_model_mic\parameters\_parameters_dict.pt')
+    weight_value = torch.load(r'_parameters_dict.pt')
 
     _scalar_factor, _new_weight= quant_obj(weight_value['autoname1<net>_connection1<con>:autoname1<net>_layer1<neg><-autoname1<net>_input<nod>:{weight}']) # 量化权重
     # print(torch.sum(_scalar_factor), len(_scalar_factor))
@@ -328,9 +328,9 @@ ls = np.zeros(100,)
 if __name__ == "__main__":
     # train()
     # single_test()
-    # quant()
+    quant()
     
-    compile_to_darwin()
+    # compile_to_darwin()
 
 
 # vt 会不会超量程 ？？？

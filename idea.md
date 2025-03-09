@@ -371,3 +371,10 @@ Already_do:
 + Todo
   + 把模型重新训练一下， 然后在狗上能够测试出 正确的输出
   + 指令的交互逻辑 也要写一下的 cmd_waiting_thread
+
+
++ Todo 
+  + 使用 新的数据与分类
+  + 重新预训练了一下，并进行了single test, 现在需要进行 重新的量化操作等
+  + 现在使用 _parameters_dict_600.pt 这个权重 或者 _parameters_dict_400.pt
+  + 给 read adn  plot 增加一个  画为量化之前权重的函数
