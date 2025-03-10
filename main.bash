@@ -19,11 +19,12 @@ sleep 2
 
 (
     echo "Starting main server..."
-    PYTHONPATH=. python3 ./API_4.0/apps/model/main_darwin.py &
-    sleep 16
+    sudo -u ysc bash -c 'PYTHONPATH=. python3 ./API_4.0/apps/model/main_darwin.py &'
+    # 加上 ysc 还是因为同样的 root + pyaudio 语音会报错
+    sleep 20
 )
 
-exit 0
+# exit 0
 
 # 启动 imu 客户端
 (
@@ -31,6 +32,8 @@ exit 0
     export PYTHONPATH=/opt/ros/melodic/lib/python2.7/dist-packages:$PYTHONPATH
     python2 ./hang_zhou_client/client_imu.py &
 )
+
+# exit 0
 
 # 启动 vedio 客户端
 (

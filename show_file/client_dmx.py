@@ -146,7 +146,7 @@ def flow_record():
     # 打开音频流
     stream = audio.open(format=FORMAT, channels=CHANNELS,
                         rate=RATE, input=True,
-                        frames_per_buffer=CHUNK, input_device_index=28)  # windows 改成0 是可以工作的
+                        frames_per_buffer=CHUNK, input_device_index=audio.get_default_input_device_info()['index'])  # windows 改成0 是可以工作的
 
     frames = []
     cnt = 0 # 用于标记这是第几个交给大模型的音频
@@ -166,7 +166,7 @@ def flow_record():
         print("max is: ", np.max(data_int))
 
         if RECORD_STATE == RECORD_STATE_DICT['Waiting_Input']:
-            print("waiting for input...")
+            # print("waiting for input...")
             if max_data_int < record_input_th:
                 continue 
             else:
@@ -198,6 +198,8 @@ def flow_record():
                 wf.close()
 
                 frames.clear() # 数据列表清空
+
+                # 最后的话，这里看看用不用 在用完的时候 把 pyaudio close 一段时间 用于 动作输出
 
                 text = baidu_wav_to_words(file_name=wf_name) # 百度转文字
 

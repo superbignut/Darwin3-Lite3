@@ -149,7 +149,7 @@ def flow_record():
     # 打开音频流
     stream = audio.open(format=FORMAT, channels=CHANNELS,
                         rate=RATE, input=True,
-                        frames_per_buffer=CHUNK, input_device_index=28)  # windows 改成0 是可以工作的
+                        frames_per_buffer=CHUNK, input_device_index=audio.get_default_input_device_info()['index'])  # windows 改成0 是可以工作的
 
     frames = []
     cnt = 0 # 用于标记这是第几个交给大模型的音频
@@ -169,7 +169,7 @@ def flow_record():
         # print(len(data), len(data_int)) 由于数据是16位，因此data的len是 8192 的double
         max_data_int = np.max(data_int)
         
-        # print("max is: ", max_data_int)
+        print("max is: ", max_data_int)
 
         if RECORD_STATE == RECORD_STATE_DICT['Waiting_Input']:
             print("waiting for input...")

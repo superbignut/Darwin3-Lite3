@@ -132,7 +132,7 @@ class Controller:
                     self.send(pack) # 
                     time.sleep(0.3)
             pack = struct.pack('<3i', 0x21010102, 0, 0)
-            self.send(pack) # 回复初始高度
+            self.send(pack) # 回复初始高度 # 这里需要外部的 定时 还原才能回去
         temp_thread = threading.Thread(target=temp_func, name="temp_func_gaodu")
         temp_thread.start()
 

@@ -13,7 +13,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-file_path = r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\alcohol\API_4.0\apps\model\app.log"
+file_path = r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\final\API_4.0\apps\model\app.log"
 
 sorted_file_path = "app.txt"
 
@@ -142,7 +142,7 @@ def plot_weight_before_quant():
 # 加载量化后的权重
 def plot_weight_func():
     global w_before_darwin
-    w_before_darwin = torch.load(r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\alcohol\quant_input_layer1.pth").detach().cpu().numpy()
+    w_before_darwin = torch.load(r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\final\quant_input_layer1.pth").detach().cpu().numpy()
     w_before_darwin = w_before_darwin.reshape(10, 10, 16, 16).transpose(0, 2, 1, 3).reshape(160, 160)
     inner_plot_func(weight=w_before_darwin)
     

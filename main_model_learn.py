@@ -144,7 +144,7 @@ def quant():
         
         def search_reasonable_quant_weight(self, weight):
             # 这里就不选了， 直接用0.97
-            _score, _scalar_factor, _new_weight = self._get_scale_factor_score_weight_unit(q=self.q, weight=weight)
+            _score, _scalar_factor, _new_weight = self._get_scale_factor_score_weight(q=self.q, weight=weight)
             print("origin_weight", weight)
             print("quant_loss is: ", _score)
             print("scalar_factor is: ", _scalar_factor)
@@ -161,7 +161,7 @@ def quant():
     quant_obj = Symmetric_Quantize(Symmetric_Quantize.Target_Precision.INT8) # 量化权重
 
 
-    weight_value = torch.load(r'_parameters_dict.pt')
+    weight_value = torch.load(r'_parameters_dict_400.pt')
 
     _scalar_factor, _new_weight= quant_obj(weight_value['autoname1<net>_connection1<con>:autoname1<net>_layer1<neg><-autoname1<net>_input<nod>:{weight}']) # 量化权重
     # print(torch.sum(_scalar_factor), len(_scalar_factor))
@@ -236,14 +236,14 @@ def compile_to_darwin():
     
     _scalar_factor = np.sum(_scalar_factor.detach().cpu().numpy()) / 100 / 2 # 这里 会超量程 所以 取了一半 取值 400 
 
-    # print(_scalar_factor)
+    print(_scalar_factor) # 330
 
     input0_neurons = PhysicalPopulation(shape=[input_node_num, ], coord=[-1, 1], pop_position="input") # 使用负坐标， 表示不在darwin上
     layer1_neurons = PhysicalPopulation(shape=[label_num,  ], coord=[ 0, 2]) #
     layer2_neurons = PhysicalPopulation(shape=[label_num,  ], coord=[ 0, 3]) #
     output_neurons = PhysicalPopulation(shape=[label_num,  ], coord=[-1, 3], pop_position='output') # 使用负坐标 
 
-    emo_net_weight = torch.load(r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\alcohol\quant_input_layer1.pth").detach().cpu().numpy() # 加载权重
+    emo_net_weight = torch.load(r"C:\Users\bignuts\Desktop\ZJU\hang_zhou\final\quant_input_layer1.pth").detach().cpu().numpy() # 加载权重
 
     """     add_connections('full',   
                     weight=emo_net_weight, 
@@ -277,9 +277,9 @@ def compile_to_darwin():
     pops_data = {}
     pops_data['layer1'] = {} # layer1 是stdpex 
     # vreset 的 区间是 -32768 ~ 32768 是 16位有符号寄存器
-    pops_data['layer1']['core_config'] = spaic_stdpexlif_ts_learn_config(vreset=-60*400, timestep=time_step, th_inc=25, th_sub=1) 
+    pops_data['layer1']['core_config'] = spaic_stdpexlif_ts_learn_config(vreset=-60*330, timestep=time_step, th_inc=25, th_sub=1) 
     pops_data['layer1']['vth_theta'] = ( np.zeros((label_num, )) + 0 ) # 所有的vth_theta最开始都是0， 每次脉冲增加 25
-    pops_data['layer1']['my_vth'] = ( np.zeros(label_num, ) - 52 * 400 ) # 初始化是-52 # 16位有符号
+    pops_data['layer1']['my_vth'] = ( np.zeros(label_num, ) - 52 * 330 ) # 初始化是-52 # 16位有符号
     pops_data['layer1']['my_loop_index'] = ( np.zeros(label_num, ) ) # 初始化是 0  
 
     # pops_data['layer1']['1ax'] = ( np.zeros(label_num, ) + 0 ) #   迹初始化是 0 使用寄存器reset 代替
@@ -328,9 +328,9 @@ ls = np.zeros(100,)
 if __name__ == "__main__":
     # train()
     # single_test()
-    quant()
+    # quant()
     
-    # compile_to_darwin()
+    compile_to_darwin()
 
 
 # vt 会不会超量程 ？？？
