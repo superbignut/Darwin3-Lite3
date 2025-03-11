@@ -153,8 +153,11 @@ class Darwin_Net():
         # 一个时间步周期的运行， 输入数据维度 1 * 256，也即需要 [[1,2,3,4,...]] 这种
         # 返回脉冲输出，维度与输入一致 1 * 256
         # 最外层似乎的一层没什么用，只是和 pytorch 的历史一致
-        ls = np.zeros(100,)
-        print("input ls is: ", input_ls)
+        ls = np.zeros((1, label_num))
+        
+        if develop_mode:
+            print("input ls is: ", input_ls)
+
         for _ in range(self.time_step):
             a = self.input_func(input_ls)
             # print("a is: ", a)
@@ -162,12 +165,15 @@ class Darwin_Net():
             # print("out is:", out)   
             for i in range(len(out[0])):
                 index = out[0][i][1]
-                ls[index] += 1
-        # print(ls.nonzero())
+                ls[0][index] += 1
+                
+        if develop_mode:
+            print("ls nozeros is : " ,ls[0].nonzero())
         # print(ls[ls.nonzero()])
-        return np.array(ls.nonzero())  # 
+        return ls  # 
 
-    def input_func(self, input_ls, unit_conversion=0.6, dt=0.1):# 这连个参数对标spaic的possion_encoder
+    def input_func(self, input_ls, unit_conversion=0.6, dt=0.4):
+        # 这两个参数对标spaic的possion_encoder，但由于我的抑制层的权重放大的较小，所以这里可以适当调节 这两个超参数，从而得到合适的脉冲输出
         # 这里改成 numpy 的输入, 输入维度 1 * input_node_num
         # 返回 一个 list 也即发放脉冲的神经元编号
         a = (np.random.rand(*input_ls.shape) < input_ls * unit_conversion * dt)
@@ -180,22 +186,6 @@ class Darwin_Net():
         # Todo reward 暂未使用
         return self.ysc_darwin_step(data)
     
-
-    
-    """     def new_check_label_from_data(self, data):
-        # 这里暗含了优先级的概念在里面, 但要是能真正影响 情绪输出的还得是 权重
-        
-        if data[0][2] == 1 or data[0][5] == 1 or data[0][10] == 1 or data[0][12] == 1:
-            return EMO["ANGRY"] # 
-        
-        elif data[0][15] == 1 or  data[0][14] == 1 or data[0][7] == 1 or data[0][6] == 1 or data[0][4] == 1 or data[0][1] == 1:
-            return EMO['NEGATIVE']
-        
-        elif data[0][0] == 1 or data[0][3] == 1 or data[0][8] == 1 or data[0][9] == 1 or data[0][11] == 1 or data[0][13] == 1:
-            return EMO['POSITIVE']
-        
-        else:
-            raise NotImplementedError """
 
 
     def assign_label_update(self, newoutput=None, newlabel=None, weight=0):
@@ -215,8 +205,10 @@ class Darwin_Net():
           
     def predict_with_no_assign_label_update(self, output):
         # 根据输出 返回模型的预测
-        print(output.shape)
-        print(output)
+        if develop_mode:
+            print("shape is: ", output.shape)
+            print("output is: ", output)
+            print("assign label is :", self.assign_label)
         if self.assign_label == None:
             raise ValueError("predict_with_no_assign_label_update error!")
         
@@ -315,6 +307,12 @@ class Gouzi:
         Cmd_GoAhead = 9             # 向前走指令
         Cmd_GoBack = 10             # 向后走指令
         Cmd_Woof = 11               # 往往叫指令
+    
+    class State:
+        stand_up = 1
+        lie_down = 2
+        low_height = 3
+
         
         # Todo 当然还有更多样的指令，扭一扭、跟随之类的，先不弄
 
@@ -335,27 +333,38 @@ class Gouzi:
         self.cmd_thread = threading.Thread(target=self.cmd_waiting_thread, name="cmd_thread") # 命令线程
 
         self.controller = None # 控制器
+
+        self.current_state = self.State.stand_up # 初始状态 设为站立状态
         
         if not develop_mode:
             self.action_socket_init() # 初始化 Controller
 
         self.is_moving = False
 
+        self.emo = (EMO["NULL"], time.time()) # 第二个参数 用于标记当前emo 的时效性
+    """
+        实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
+
+        | 0     1     2    3      |   4    5   |  6     |  7     8     9   |   10    11   |  12    |  13    14    15  |
+        | 蓝    红    黑  表扬语义 |  批评  批评 | 酒精高  | 点赞  手掌  拳头  |  抚摸  抚摸  |   拍打  | 电低  电低  电低  |     
+    """
     def test_darwin(self):
         # 这个函数是用来测试达尔文的 输入和 输出的函数
         # 实际不使用
         temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
 
-        temp_input[1] = 1 
-        temp_input[3] = 1
-        temp_input[2] = 1
-        temp_input[4] = 1
+        temp_input[1] = 1  # 使用颜色衣服进行测试
 
         temp_input = np.array([np.tile(temp_input, input_num_mul_index)])       # 增加了一个维度
 
         temp_output = self.robot_net.run(data=temp_input)          # 前向传播
 
+        temp_emotion = self.robot_net.predict_with_no_assign_label_update(output=temp_output)
+
         print("output is : ", temp_output)
+
+
+        print("emotion output is :", temp_emotion)
 
     
     def action_socket_init(self):
@@ -423,23 +432,66 @@ class Gouzi:
             
             self.cmd = self.Sensor.Null
 
-    def cmd_plus_emotion(self, cmd, emo):
+    def cmd_plus_emotion(self, cmd, emo=None):
 
-        # 将 命令 和 情感 融合后输出， 如果声音有问题  就去掉声音
+        # 将 命令 和 情感 融合后输出
 
+        # 其实我感觉真正应该 清楚状态的 是在执行完动作之后
+
+        if emo == EMO["NULL"]:
+            if self.cmd == self.Sensor.Cmd_GoAhead:                
+                
+                    print("go ahead...")
+            elif self.cmd == self.Sensor.Cmd_GoBack:
+                
+                    print("go abck...")
+            elif self.cmd == self.Sensor.Cmd_LieDown:
+                
+                    print("lie down...")
+            elif self.cmd == self.Sensor.Cmd_StandUp:
+                
+                    print("stand up...")
+        
         if emo == EMO["POSITIVE"]:
             # self.say_something(1)
 
             if cmd == self.Sensor.Cmd_GoAhead:
-                pass
-                        
+                print("go ahead happy...")
+            elif self.cmd == self.Sensor.Cmd_GoBack:
+                
+                print("go abck happy...")
+            elif self.cmd == self.Sensor.Cmd_LieDown:
+                
+                print("lie down happy...")
+
+            elif self.cmd == self.Sensor.Cmd_StandUp:
+                print("stand up happy...")
 
         elif emo == EMO["NEGATIVE"]:
-            pass
-            
-
+            if cmd == self.Sensor.Cmd_GoAhead:
+                print("go ahead sad...")
+            elif self.cmd == self.Sensor.Cmd_GoBack:
+                
+                print("go abck sad...")
+            elif self.cmd == self.Sensor.Cmd_LieDown:
+                
+                print("lie down sad...")
+                
+            elif self.cmd == self.Sensor.Cmd_StandUp:
+                print("stand up sad...")
+        
         elif emo == EMO["ANGRY"]:
-            pass
+            if cmd == self.Sensor.Cmd_GoAhead:
+                print("go ahead angry...")
+            elif self.cmd == self.Sensor.Cmd_GoBack:
+                
+                print("go abck angry...")
+            elif self.cmd == self.Sensor.Cmd_LieDown:
+                
+                print("lie down angry...")
+                
+            elif self.cmd == self.Sensor.Cmd_StandUp:
+                print("stand up angry...")
             
         else:
 
@@ -460,6 +512,116 @@ class Gouzi:
             # 5 期间如果有指令信号，则进入下一次指令周期
             # 6 倒计时结束
             
+
+            
+            # self.clear_sensor_status_with_lock()                              # 清除状态
+
+
+        # def _check_emotion_input():
+        
+        #     # 这里对有明显情感导向的动作 进行检测， 如果有的话，对应的式后续的情感调节  
+
+        #     # 这里与 _check_sensor_input 的不同的地方就是， 这里只对 几个有明显情感倾向的的动作进行检测
+        #     if self.dmx == self.Sensor.Dmx_Positive or self.gesture == self.Sensor.Gesture_Like or self.imu == self.Sensor.IMU_Touching:                
+                
+        #         temp = EMO["POSITIVE"]
+            
+        #     elif self.dmx == self.Sensor.Dmx_Negative:                
+        #         temp = EMO["NEGATIVE"]
+            
+        #     elif self.imu == self.Sensor.IMU_Hit or self.gesture == self.Sensor.Gesture_Dislike:
+        #         temp = EMO["ANGRY"]
+            
+        #     else:
+        #         temp = EMO["NULL"]
+            
+        #     self.clear_sensor_status_with_lock()                                # 清除状态
+
+        #     return temp
+            
+        
+        # print("go to while ")
+        while True:
+            
+            temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
+
+            if self.cmd != self.Sensor.Null:                                    
+                # 如果有指令输入，从darwin得到情感输出， 进而机器狗动作输出
+
+                _check_sensor_input(temp_ls=temp_input)                             # 传感器输入检测    
+
+                
+                print("current cmd is: ", self.cmd)
+                print("current temp_input is:", temp_input)                         # 查看修改后的输入数据
+                
+                if sum(temp_input) != 0:
+                    # 如果没有有效输入 就直接 动作输出
+                    
+
+                    temp_input = np.array([np.tile(temp_input, input_num_mul_index)])   # 输入维度扩充，第二种扩充
+                
+                    temp_output = self.robot_net.run(data=temp_input)                   # 网络输出
+
+                    temp_emotion = self.robot_net.predict_with_no_assign_label_update(output=temp_output) # 情感输出
+
+                    print("current emotion output with cmd is :", temp_emotion)
+                
+                else:
+                    temp_emotion = EMO["NULL"] # 这里标记的时没有有效的输入情况
+
+                self.cmd_plus_emotion(cmd=self.cmd, emo=temp_emotion)                   # 这里进行的动作输出
+
+                # Todo 测试 达尔文 为什么没有输出
+            
+            
+            else:
+                # print("here....")                
+                # 这里其实没有必要 做一个 时间窗口， 直接对有明确感情的动作也做一个 if 进入
+
+                if_normal_input, emo_input = _check_sensor_input(temp_ls=temp_input)
+                
+                # emo_input = _check_emotion_input() # 检测到的具有明显情感倾向的输入
+
+                if if_normal_input: # 有常规输入
+                    current_time = time.time()
+
+                    
+
+                    # 如果有明确的情感输入, 没有指令就只迭代情感变化
+                    print("yes we get an emotion input!!!", emo_input)
+                    # self.say_something(index=1)
+                    
+                    
+                # 调节 buffer   
+            
+            
+            time.sleep(0.5)                                                     # 这里确实是要 等一下，相当于 每次留给 client_handle_thread 的传感器观察时间
+
+
+    def action_from_cmd_thread(self):
+        # 根据情感和动作 融合得到 最终的动作输出   动作线程
+
+        while True:
+
+            if self.cmd != self.Sensor.Null:                                    
+                    
+                print("current cmd is: ", self.cmd)
+
+                if time.time() - self.emo[1] < 2:
+                    
+                    temp_emotion = self.emo[0]
+                else:
+                    temp_emotion = EMO["NULL"]
+                
+                print("current emotion output with cmd is :", temp_emotion)
+                    
+                self.cmd_plus_emotion(cmd=self.cmd, emo=temp_emotion)                   # 这里进行的动作输出
+            
+            self.cmd = self.Sensor.Null # Todo 待定
+        
+    def emo_from_input_thread(self):
+        # 检测外界环境 得到 情感输出    情感线程
+
         """
             实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
 
@@ -508,85 +670,52 @@ class Gouzi:
                 temp_ls[13] = 1
                 temp_ls[14] = 1
                 temp_ls[15] = 1
-            
-            self.clear_sensor_status_with_lock()                                # 清除状态
+
+            # 不仅能修改 temp_ls 
 
 
-        def _check_emotion_input():
-        
-            # 这里对有明显情感导向的动作 进行检测， 如果有的话，对应的式后续的情感调节  
-
-            # 这里与 _check_sensor_input 的不同的地方就是， 这里只对 几个有明显情感倾向的的动作进行检测
-            if self.dmx == self.Sensor.Dmx_Positive or self.gesture == self.Sensor.Gesture_Like or self.imu == self.Sensor.IMU_Touching:                
+            if self.dmx == self.Sensor.Dmx_Positive or self.imu == self.Sensor.IMU_Touching:                
                 
-                temp = EMO["POSITIVE"]
+                temp_emo = EMO["POSITIVE"]
             
             elif self.dmx == self.Sensor.Dmx_Negative:                
-                temp = EMO["NEGATIVE"]
+                temp_emo = EMO["NEGATIVE"]
             
-            elif self.imu == self.Sensor.IMU_Hit or self.gesture == self.Sensor.Gesture_Dislike:
-                temp = EMO["ANGRY"]
+            elif self.imu == self.Sensor.IMU_Hit:
+                temp_emo = EMO["ANGRY"]
             
             else:
-                temp = EMO["NULL"]
-            
-            self.clear_sensor_status_with_lock()                                # 清除状态
+                temp_emo = EMO["NULL"]
 
-            return temp
+
+
+            if self.color != self.Sensor.Null or self.gesture != self.Sensor.Null:
+                normal_input = True
             
+            # self.clear_sensor_status_with_lock()                                # 清除状态
+
+            return normal_input, temp_emo                                       # 返回 是否有常规输入、是否有情感因素的外界输入
         
-        # print("go to while ")
+        temp_time = time.time()
+
         while True:
-            
             temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
+            
+            if_normal_input, emo_input = _check_sensor_input(temp_ls=temp_input)
 
-            if self.cmd != self.Sensor.Null:                                    
-                # 如果有指令输入，从darwin得到情感输出， 进而机器狗动作输出
+            if emo_input != EMO["NULL"] or (if_normal_input and time.time() - temp_time > 5.0):
+                # 更新 self.emo
 
-                _check_sensor_input(temp_ls=temp_input)                             # 传感器输入检测
-
-                if sum(temp_input) == 0:
-                    # 如果没有有效输入 就直接 动作输出
-                    continue
-
-                print("current cmd is: ", self.cmd)
-                print("current temp_input is:", temp_input)                         # 查看修改后的输入数据
-                
                 temp_input = np.array([np.tile(temp_input, input_num_mul_index)])   # 输入维度扩充，第二种扩充
                 
                 temp_output = self.robot_net.run(data=temp_input)                   # 网络输出
 
+                self.emo = (self.robot_net.predict_with_no_assign_label_update(output=temp_output), time.time()) # 情感输出
 
-
-                temp_emotion = self.robot_net.predict_with_no_assign_label_update(output=temp_output) # 情感输出
-
-                print("current emotion output with cmd is :", temp_emotion)
-
-                self.cmd_plus_emotion(cmd=self.cmd, emo=temp_emotion)                   # 这里进行的动作输出
-
-                # Todo 测试 达尔文 为什么没有输出
-            
             else:
-                # print("here....")                
-                # 这里其实没有必要 做一个 时间窗口， 直接对有明确感情的动作也做一个 if 进入
-                
-                emo_input = _check_emotion_input() # 检测到的具有明显情感倾向的输入
-                print("emo_input is:", emo_input)
-
-                
-                
-                if emo_input != EMO["NULL"]:
-                    # 如果有明确的情感输入, 没有指令就只迭代情感变化
-                    print("yes we get an emotion input!!!", emo_input)
-                    # self.say_something(index=1)
-                    self.controller.low_height_of_dog() 
-                    
-                # 调节 buffer   
-            
-            
-            time.sleep(0.5)                                                     # 这里确实是要 等一下，相当于 每次留给 client_handle_thread 的传感器观察时间
-
-            
+                # 
+                temp_time = time.time()
+                self.emo[1] = time.time()
 
     def client_handle_thread(self, client_socket):
         # 处理不同客户端上报的传感器数据，这里需要一个通信格式的定义
@@ -673,7 +802,7 @@ if __name__ == "__main__":
     # 这个文件需要在 API_4.0 外面执行
     # ysc_darwin_init()
     xiaobai = Gouzi()
-    # xiaobai.test_darwin()
+    xiaobai.test_darwin()
     # xiaobai.test_darwin()
     # xiaobai.test_darwin()
     # xiaobai.start()
