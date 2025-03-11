@@ -163,7 +163,7 @@ def flow_record():
         data_int = np.abs(np.frombuffer(data, dtype=np.int16))
         # print(len(data), len(data_int)) 由于数据是16位，因此data的len是 8192 的double
         max_data_int = np.max(data_int)
-        print("max is: ", np.max(data_int))
+        # print("max is: ", np.max(data_int))
 
         if RECORD_STATE == RECORD_STATE_DICT['Waiting_Input']:
             # print("waiting for input...")
@@ -203,6 +203,8 @@ def flow_record():
 
                 text = baidu_wav_to_words(file_name=wf_name) # 百度转文字
 
+                if len(text) <= 2:
+                    pass
                 if "起来" in text:
                     print("######### stand up!!!")
                     args1 = Cmd_StandUp

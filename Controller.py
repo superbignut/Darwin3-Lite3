@@ -83,6 +83,15 @@ class Controller:
         tt.start()
         
 
+    def di_tou_new(self):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        self.not_move()
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        
+        pack = struct.pack('<3i', 0x21010C0A, 8, 0) 
+        self.send(pack)         
+        
 
 
     def not_move(self):

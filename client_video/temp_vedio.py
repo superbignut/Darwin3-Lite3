@@ -78,6 +78,8 @@ if __name__ == '__main__':
     
     gesture_buffer = [None] * 3 # 这个长度用来检测手势的判定
 
+    color_buffer = [None] * 4
+
     pixels_buffer = np.zeros(3) 
 
     lower_red = np.array([100, 0, 0])   # 红色的最低范围
@@ -146,11 +148,17 @@ if __name__ == '__main__':
                 # 计算最大颜色的占比
                 _ratio = pixels_buffer[max_color] * 5 *100 // total_pixels # 多乘了5 作为放大系数 python2 是整数
                 
+                # print("radio color is : " , _ratio)
                 if _ratio > 8:  # 这个参数用来调节颜色的判定阈值
 
-                    data = "color " + str(max_color + 1) + " " + str(0) # 红1 蓝2 黑3
-                    args1 = max_color + 1
-                    # print(data)
+                    color_buffer.insert(0, max_color)
+                    color_buffer.pop()
+
+                    if color_buffer[0] is not None and all(col == color_buffer[0] for col in color_buffer):
+                        data = "color " + str(color_buffer[0] + 1) + " " + str(0) # 红1 蓝2 黑3
+                        args1 = color_buffer[0] + 1
+                        print(data)
+                    
                     # Todo  这里把手势加到第二个参数上
                 
                     # client_socket.sendall(data.encode('utf-8'))
@@ -158,8 +166,8 @@ if __name__ == '__main__':
                 # time.sleep(0.4)
                 # cv.rectangle(image, (int(cloth[0]), int(cloth[1])), (int(cloth[2]), int(cloth[3])), (0, 255, 0), 1)
 
-        # cv.imshow("Demo", image)
-        # k = cv.waitKey(1) # 画图必备
+        cv.imshow("Demo", image)
+        k = cv.waitKey(1) # 画图必备
         # control robot dog
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
             # only use the biggest area right hand

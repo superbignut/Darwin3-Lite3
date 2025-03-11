@@ -21,7 +21,7 @@ sleep 2
     echo "Starting main server..."
     sudo -u ysc bash -c 'PYTHONPATH=. python3 ./API_4.0/apps/model/main_darwin.py &'
     # 加上 ysc 还是因为同样的 root + pyaudio 语音会报错
-    sleep 20
+    sleep 22
 )
 
 # exit 0

@@ -93,16 +93,18 @@ if __name__ == '__main__':
     
     gesture_buffer = [None] * 3 # 手势判定 阈值调节 出现多少次被算作成功
 
+    color_buffer = [None] * 4
+
     pixels_buffer = np.zeros(3) 
 
-    lower_red = np.array([100, 0, 0])   # 红色的最低范围
+    lower_red = np.array([150 , 0, 0])   # 红色的最低范围
     upper_red = np.array([255, 80, 80]) # 红色的最高范围
 
-    lower_blue = np.array([100, 150, 0])
-    upper_blue = np.array([140, 255, 255])
+    lower_blue = np.array([0, 100, 150])
+    upper_blue = np.array([50, 200, 250])
 
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 255, 30])
+    upper_black = np.array([50, 50, 50])
 
 
     while True:
@@ -165,7 +167,14 @@ if __name__ == '__main__':
 
                     # data = "color " + str(max_color + 1) + " " + str(0) # 红1 蓝2 黑3 所以加一
                     
-                    args1 = max_color + 1
+                    # args1 = max_color + 1
+
+                    color_buffer.insert(0, max_color)
+                    color_buffer.pop()
+
+                    if color_buffer[0] is not None and all(col == color_buffer[0] for col in color_buffer):
+                        # data = "color " + str(color_buffer[0] + 1) + " " + str(0) # 红1 蓝2 黑3
+                        args1 = color_buffer[0] + 1
 
 
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
