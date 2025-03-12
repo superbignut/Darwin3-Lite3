@@ -103,14 +103,24 @@ if __name__ == '__main__':
 
     pixels_buffer = np.zeros(3) 
 
-    lower_red = np.array([150 , 0, 0])   # 红色的最低范围
-    upper_red = np.array([255, 80, 80]) # 红色的最高范围
+    # lower_red = np.array([150 , 0, 0])   # 红色的最低范围
+    # upper_red = np.array([255, 80, 80]) # 红色的最高范围
 
-    lower_blue = np.array([0, 100, 150])
-    upper_blue = np.array([50, 200, 250])
+    # lower_blue = np.array([0, 100, 150])
+    # upper_blue = np.array([50, 200, 250])
 
-    lower_black = np.array([0, 0, 0])
-    upper_black = np.array([50, 50, 50])
+    # lower_black = np.array([0, 0, 0])
+    # upper_black = np.array([20, 20, 20])
+
+
+    lower_red_hsv = np.array([0, 100, 100])   # 红色的最低范围（可以调整以适应你的具体图像）
+    upper_red_hsv = np.array([10, 255, 255])  # 红色的最高范围
+    
+    lower_blue_hsv = np.array([100, 150, 0])  # 蓝色的最低范围
+    upper_blue_hsv = np.array([140, 255, 255])  # 蓝色的最高范围
+    
+    lower_black_hsv = np.array([0, 0, 0])     # 黑色的最低范围
+    upper_black_hsv = np.array([180, 255, 30])  # 黑色的最高范围
 
 
     while True:
@@ -148,12 +158,19 @@ if __name__ == '__main__':
                 cloth_image = frame[y1:y2, x1:x2]
     
                 # 将RoI转换为HSV颜色空间
-                image_rgb = cv.cvtColor(cloth_image, cv.COLOR_BGR2RGB)
+                # image_rgb = cv.cvtColor(cloth_image, cv.COLOR_BGR2RGB)
+
+                image_hsv = cv.cvtColor(cloth_image, cv.COLOR_BGR2HSV)
     
                 # 创建掩码
-                red_mask = cv.inRange(image_rgb, lower_red, upper_red) # 在范围内的是255 其余变成0
-                blue_mask = cv.inRange(image_rgb, lower_blue, upper_blue) # 在范围内的是255 其余变成0
-                black_mask = cv.inRange(image_rgb, lower_black, upper_black) # 在范围内的是255 其余变成0
+                # red_mask = cv.inRange(image_rgb, lower_red, upper_red) # 在范围内的是255 其余变成0
+                # blue_mask = cv.inRange(image_rgb, lower_blue, upper_blue) # 在范围内的是255 其余变成0
+                # black_mask = cv.inRange(image_rgb, lower_black, upper_black) # 在范围内的是255 其余变成0
+
+                red_mask = cv.inRange(image_hsv, lower_red_hsv, upper_red_hsv)  # 在范围内的是255，其余变成0
+                blue_mask = cv.inRange(image_hsv, lower_blue_hsv, upper_blue_hsv)  # 在范围内的是255，其余变成0
+                black_mask = cv.inRange(image_hsv, lower_black_hsv, upper_black_hsv)  # 在范围内的是255，其余变成0
+ 
 
                 # 计算红色区域的像素数量
                 pixels_buffer[0] = cv.countNonZero(red_mask) # 计算非零区域
@@ -161,7 +178,9 @@ if __name__ == '__main__':
                 pixels_buffer[2] = cv.countNonZero(black_mask)
 
                 # 计算总像素数量
-                total_pixels = image_rgb.shape[0] * image_rgb.shape[1] # 统计总像素数
+                # total_pixels = image_rgb.shape[0] * image_rgb.shape[1] # 统计总像素数
+
+                total_pixels = image_hsv.shape[0] * image_hsv.shape[1] # 统计总像素数
 
                 # 最大颜色编号
                 max_color = pixels_buffer.argmax()
