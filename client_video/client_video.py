@@ -208,5 +208,6 @@ if __name__ == '__main__':
             data = "video " + str(args1) + " " + str(args2) + " " + str(args3)
             client_socket.sendall(data.encode('utf-8'))
             # print(data)
-            # time.sleep(0.5)
+        
+        time.sleep(0.5) # 总体的循环速度慢一点
 # 给models 加了一个init

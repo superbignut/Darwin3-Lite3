@@ -43,7 +43,8 @@ import subprocess
 import wave
 import pyaudio
 
-develop_mode = False # 开发模式，不创建socket， 不做动作
+develop_mode = False 
+# 开发模式，不创建socket， 不做动作
 
 EMO = {"POSITIVE":0, "NEGATIVE":1, "ANGRY":2, "NULL":3} # NULL(只在没有输入的时候使用 ), 积极，消极，愤怒
 
@@ -69,25 +70,15 @@ label_num = 100 # 解码神经元数目
 
 
 def _bo_fang(index):
+    # 把狗上的Sound 输出改成 Analog Output USB Audio Device, 则可以在不影响dmx 的前提下 实现播放
     try:
         if index == 1:
             file_name = "wang_wang.wav"
         elif index == 2:
             file_name = "woof_sad.wav"
         
-        file_path = os.path.join(os.path.dirname(__file__), file_name)
-        wf = wave.open(file_path, 'rb')        
+        os.system(f'aplay "{file_name}"') # 原来这个这么简答，非要去使用 pyaudio 干嘛呢
 
-        p = pyaudio.PyAudio()           # 创建PyAudio对象
-        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),channels=wf.getnchannels(),rate=wf.getframerate(),output=True)        
-        data = wf.readframes(1024)      # 播放数据
-        while data:
-            stream.write(data)
-            data = wf.readframes(1024)
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-        wf.close()
     except:
         print("audio played error!")
     finally:
@@ -341,11 +332,14 @@ class Gouzi:
         self.current_state = self.State.stand_up # 初始状态 设为站立状态
         
         if not develop_mode:
+            # 如果是在windows上进行调试，这个运动主机的接口是 需要完全关闭的
             self.action_socket_init() # 初始化 Controller
 
         self.is_moving = False
 
         self.emo = (EMO["NULL"], time.time()) # 第二个参数 用于标记当前emo 的时效性
+
+        self.emo_check_window = 10.0 # 检测窗口时间间隔， 也是上一个情感输出 在没有明显情感动作输入后的 持续时间
     """
         实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
 
@@ -380,7 +374,7 @@ class Gouzi:
         time.sleep(1)
         self.controller.not_move() # 进入 静止状态
         time.sleep(1)
-        self.controller.stand_up() # 站起来
+        # self.controller.stand_up() # 站起来
         print('stand_up')
         # pack = struct.pack('<3i', 0x21010202, 0, 0)
         # controller.send(pack) # 
@@ -395,7 +389,7 @@ class Gouzi:
 
         self.emo_thread.start() # 情感线程启动
 
-        self.say_something(index=1) # 汪汪一下
+        self.m_wang_wang() # 汪汪一下
 
         print("Gouzi into socket server...")
         
@@ -418,6 +412,8 @@ class Gouzi:
 
     def say_something(self, index):    
         # 调用外部函数，播放音频
+        # obsolote 改成直接调用播放替代
+        raise ValueError("OBSOLOTE FUNCTION...")
         temp_t = threading.Thread(target=_bo_fang, name="bo_fang_thread", args=(index, ))
         temp_t.start() # 这里 因为麦克风是 io 且是独占的，所有 多线程可以加速， 并且 需要join
         temp_t.join()
@@ -539,6 +535,19 @@ class Gouzi:
 
         time.sleep(2)
 
+    def m_wang_wang(self):
+        print("wang wang wang......")
+        _bo_fang(index=1)
+
+        time.sleep(0.5)
+    
+    def m_wu_wu(self):
+        
+        _bo_fang(index=2)
+        
+        time.sleep(1.5)
+
+
 
     """
         实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
@@ -554,7 +563,7 @@ class Gouzi:
 
         if emo == EMO["NULL"]:
             if self.cmd == self.Sensor.Cmd_GoAhead:                
-                
+                    
                     print("go ahead...")
             elif self.cmd == self.Sensor.Cmd_GoBack:
                 
@@ -562,9 +571,11 @@ class Gouzi:
             elif self.cmd == self.Sensor.Cmd_LieDown:
 
                     print("lie down...")
+                    self.m_wang_wang()
                     self.m_lie_down()
             elif self.cmd == self.Sensor.Cmd_StandUp:
                     print("stand up ...")
+                    self.m_wang_wang()
                     self.m_stand_up()
         
         elif emo == EMO["POSITIVE"]:
@@ -609,17 +620,21 @@ class Gouzi:
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead angry...")
                 
-                self.m_di_tou()
+                # self.m_di_tou()
+                self.m_wang_wang()
 
             elif self.cmd == self.Sensor.Cmd_GoBack:
                 
                 print("go abck angry...")
+                self.m_wang_wang()
             elif self.cmd == self.Sensor.Cmd_LieDown:
                 
                 print("lie down angry...")
                 self.m_shake_head()
 
             elif self.cmd == self.Sensor.Cmd_StandUp:
+                
+                self.m_shake_head()
                 print("stand up angry...")
 
             
@@ -639,10 +654,11 @@ class Gouzi:
                     
                 print("current cmd is: ", self.cmd)
 
-                if time.time() - self.emo[1] < 2: # 动作参数
-                    
+                if time.time() - self.emo[1] < self.emo_check_window: 
+                    # 如果在emo窗口之内
                     temp_emotion = self.emo[0]
                 else:
+                    # 在emo 窗口之外说明 长时间没有有效输入
                     temp_emotion = EMO["NULL"]
                 
                 # print("current emotion output with cmd is :", temp_emotion)
@@ -651,7 +667,7 @@ class Gouzi:
             
                 self.clear_cmd() # 清空
 
-            time.sleep(0.5)
+            time.sleep(0.5) # 慢一点
         
     def emo_from_input_thread(self):
         # 检测外界环境 得到 情感输出    情感线程
@@ -667,16 +683,21 @@ class Gouzi:
 
             # 颜色
             if self.color == self.Sensor.Color_Blue:
+                temp_ls[0]= temp_ls[1] = temp_ls[2] = 0 # 每次同属性赋值的时候，清空其他输入
                 temp_ls[0] = 1
             elif self.color == self.Sensor.Color_Red:
+                temp_ls[0]= temp_ls[1] = temp_ls[2] = 0 
                 temp_ls[1] = 1
             elif self.color == self.Sensor.Color_Black:
+                temp_ls[0]= temp_ls[1] = temp_ls[2] = 0 
                 temp_ls[2] = 1
             
             # 语义
             if self.dmx == self.Sensor.Dmx_Positive:
+                temp_ls[3] = temp_ls[4] = temp_ls[5] = 0
                 temp_ls[3] = 1
             elif self.dmx == self.Sensor.Dmx_Negative:
+                temp_ls[3] = temp_ls[4] = temp_ls[5] = 0
                 temp_ls[4] = 1
                 temp_ls[5] = 1
 
@@ -686,18 +707,23 @@ class Gouzi:
             
             # 手势
             if self.gesture == self.Sensor.Gesture_Like:
+                temp_ls[7] = temp_ls[8] = temp_ls[9] = 0
                 temp_ls[7] = 1
             elif self.gesture == self.Sensor.Gesture_Palm:
+                temp_ls[7] = temp_ls[8] = temp_ls[9] = 0
                 temp_ls[8] = 1
             elif self.gesture == self.Sensor.Gesture_Dislike:
+                temp_ls[7] = temp_ls[8] = temp_ls[9] = 0
                 temp_ls[9] = 1
 
 
             # IMU
             if self.imu == self.Sensor.IMU_Touching:
+                temp_ls[10] = temp_ls[11] = temp_ls[12] = 0
                 temp_ls[10] = 1
                 temp_ls[11] = 1
             elif self.imu == self.Sensor.IMU_Hit:
+                temp_ls[10] = temp_ls[11] = temp_ls[12] = 0
                 temp_ls[12] = 1
             
             # 电量
@@ -723,40 +749,52 @@ class Gouzi:
                 temp_emo = EMO["NULL"]
 
             if self.color != self.Sensor.Null or self.gesture != self.Sensor.Null:
+                
                 if_normal_input = True
             else:
+                
                 if_normal_input = False
             
-            # self.clear_sensor_status_with_lock()                                # 清除状态
+            # self.clear_sensor_status_with_lock()                                                                  # 这里不去清除状态，把清除操作留给检测到有效输入之后
 
-            return if_normal_input, temp_emo                                       # 返回 是否有常规输入、是否有情感因素的外界输入
+            return if_normal_input, temp_emo                                                                        # 返回 是否有常规输入、是否有情感因素的外界输入
         
         # temp_time = time.time()
 
-        while True:
 
-            temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化
+        temp_input = np.zeros(input_node_num_origin) # 初始传感器维度, 传感器初始化， 
+        
+                                                                                                                    # 这里并不是每个 while 都进行清空，那样的话频率太快
+                                                                                                                    # 而且 在 _check_sensor_input 中 同种类的输入是互斥的，所以不用担心 同种类多输入的情况
+        
+        while True:
             
             if_normal_input, emo_input = _check_sensor_input(temp_ls=temp_input)
 
-            if emo_input != EMO["NULL"] or (if_normal_input and time.time() - self.emo[1] > 5.0): # 超参数 有待调节
+            if emo_input != EMO["NULL"] or (if_normal_input and time.time() - self.emo[1] > self.emo_check_window): # 超参数 有待调节
                 # 更新 self.emo
 
                 print("input list is: ", temp_input)
 
-                temp_input = np.array([np.tile(temp_input, input_num_mul_index)])   # 输入维度扩充，第二种扩充
+                temp_input = np.array([np.tile(temp_input, input_num_mul_index)])                                   # 输入维度扩充，第二种扩充
                 
-                temp_output = self.robot_net.run(data=temp_input)                   # 网络输出
+                temp_output = self.robot_net.run(data=temp_input)                                                   # 网络输出
 
-                self.emo = (self.robot_net.predict_with_no_assign_label_update(output=temp_output), time.time()) # 情感输出
+                self.emo = (self.robot_net.predict_with_no_assign_label_update(output=temp_output), time.time())    # 情感输出
 
                 print("emo changed to ", self.emo)
 
-                self.clear_sensor_status_with_lock()                                # 清除状态
+                self.clear_sensor_status_with_lock()                                                                # 清除状态
+
+                temp_input = np.zeros(input_node_num_origin)                                                        # 每当一次有效输入，才会去清空输入
 
                 if emo_input != EMO["NULL"] and if_normal_input:
                     # 这里进行在线调节
                     pass
+            
+            elif time.time() - self.emo[1] > self.emo_check_window:
+                
+                print("long time no meaningful input!!!!")
 
             time.sleep(0.5)
                 

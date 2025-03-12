@@ -27,20 +27,25 @@ sleep 2
 # exit 0
 
 # 启动 imu 客户端
-(
-    echo "Starting imu client..."
-    export PYTHONPATH=/opt/ros/melodic/lib/python2.7/dist-packages:$PYTHONPATH
-    python2 ./hang_zhou_client/client_imu.py &
-)
+if false; then
+    (
+        echo "Starting imu client..."
+        export PYTHONPATH=/opt/ros/melodic/lib/python2.7/dist-packages:$PYTHONPATH
+        python2 ./hang_zhou_client/client_imu.py &
+    )
+fi
 
 # exit 0
 
 # 启动 vedio 客户端
-(
-    echo "Starting color client..."
-    cd client_video
-    /home/ysc/.local/bin/pipenv run python client_video.py & 
-)
+if false; then
+    (
+        echo "Starting color client..."
+        cd client_video
+        /home/ysc/.local/bin/pipenv run python client_video.py & 
+    )    
+fi
+
 
 # 启动 语音 客户端
 (

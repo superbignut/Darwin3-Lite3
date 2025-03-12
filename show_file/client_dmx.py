@@ -42,11 +42,11 @@ Dmx_Negative = 2            # 消极语义 * 2
 
 
 
-Cmd_LieDown = 1             # 趴下指令
-Cmd_StandUp = 2             # 站起来指令
-Cmd_GoAhead = 3             # 向前走指令
-Cmd_GoBack = 4              # 向后走指令
-Cmd_Woof = 5                # 往往叫指令
+Cmd_LieDown = 7             # 趴下指令
+Cmd_StandUp = 8             # 站起来指令
+Cmd_GoAhead = 9             # 向前走指令
+Cmd_GoBack = 10              # 向后走指令
+Cmd_Woof = 11                # 往往叫指令
 
 def baidu_wav_to_words(file_name):
 
