@@ -43,10 +43,19 @@ import subprocess
 import wave
 import pyaudio
 
-develop_mode = False 
+develop_mode = False
+# print(os.getenv("MY_FLAG"))
+if os.getenv("MY_FLAG") == "dev":
+    develop_mode = True
+    print("develop mode....")
+else:
+    develop_mode = False
+    print("not develop mode....")
+
+# sys.exit()
 # 开发模式，不创建socket， 不做动作
 
-EMO = {"POSITIVE":0, "NEGATIVE":1, "ANGRY":2, "NULL":3} # NULL(只在没有输入的时候使用 ), 积极，消极，愤怒
+EMO = {"POSITIVE":0, "NEGATIVE":1, "ANGRY":2, "NULL":3} # NULL(只在没有输入的时候使用 ), 积极，消极，愤怒"
 
 INTERACT = {"POSITIVE":0, "NEGATIVE":1, "ANGRY":2} # 用于对交互结果进行 积极和消极的判定 # 这里还要加一个
 
@@ -77,7 +86,11 @@ def _bo_fang(index):
         elif index == 2:
             file_name = "woof_sad.wav"
         
-        os.system(f'aplay "{file_name}"') # 原来这个这么简答，非要去使用 pyaudio 干嘛呢
+        if not develop_mode:
+            os.system(f'aplay "{file_name}"') # 原来这个这么简答，非要去使用 pyaudio 干嘛呢
+        else:
+            import winsound
+            winsound.PlaySound(file_name, winsound.SND_FILENAME)
 
     except:
         print("audio played error!")
@@ -146,7 +159,7 @@ class Darwin_Net():
         # 最外层似乎的一层没什么用，只是和 pytorch 的历史一致
         ls = np.zeros((1, label_num))
         
-        if develop_mode:
+        if False:
             print("input ls is: ", input_ls)
 
         for _ in range(self.time_step):
@@ -158,7 +171,7 @@ class Darwin_Net():
                 index = out[0][i][1]
                 ls[0][index] += 1
                 
-        if develop_mode:
+        if False:
             print("ls nozeros is : " ,ls[0].nonzero())
         # print(ls[ls.nonzero()])
         return ls  # 
@@ -197,9 +210,10 @@ class Darwin_Net():
     def predict_with_no_assign_label_update(self, output):
         # 根据输出 返回模型的预测
         if develop_mode:
-            print("shape is: ", output.shape)
-            print("output is: ", output)
-            print("assign label is :", self.assign_label)
+            if False:
+                print("shape is: ", output.shape)
+                print("output is: ", output)
+                print("assign label is :", self.assign_label)
         if self.assign_label == None:
             raise ValueError("predict_with_no_assign_label_update error!")
         
@@ -260,8 +274,37 @@ class Darwin_Net():
             
             # Todo 有待补充
 
+class fake_controller:
+    def __init__(self):
+        
+        self.thread_active = False
+    
+    def zuo_you_huang(self):
+        pass
+
+    def stand_up(self):
+        pass
+
+    def di_tou_new(self):
+        pass
+
+    def low_height_of_dog(self):
+        pass
+
+    def fuyang_or_qianhou(self):
+        pass
+
+    def pian_hang(self):
+        pass
+
+    def niu_yi_niu(self):
+        pass
+
+    def di_tou_new(self):
+        pass
 
 
+    
 class Gouzi:
     class Sensor():
         # 各种检测到的传感器 编码输入数据 和 指令数据的状态
@@ -334,6 +377,8 @@ class Gouzi:
         if not develop_mode:
             # 如果是在windows上进行调试，这个运动主机的接口是 需要完全关闭的
             self.action_socket_init() # 初始化 Controller
+        else:
+            self.controller = fake_controller() #
 
         self.is_moving = False
 
@@ -384,21 +429,27 @@ class Gouzi:
 
     def start(self):
         # 外部调用，启动指令监听线程
-
+        print("start function....")
         self.cmd_thread.start() # 指令线程启动
 
+        print("cmd thread....")
         self.emo_thread.start() # 情感线程启动
 
+        print("emo thread....")
         self.m_wang_wang() # 汪汪一下
 
         print("Gouzi into socket server...")
         
-        if not develop_mode:
-            self.start_server() # 启动监听线程 ， 线程中不断获取传感器数据
+        # if not develop_mode:
+        self.start_server() # 启动监听线程 ， 线程中不断获取传感器数据
 
 
     def start_server(self, host='192.168.1.103', port=12345):
         # 启动client 监听线程
+        # global develop_mode
+        if develop_mode:
+            host = "172.31.111.211"
+            print("host is ", host)
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((host, port))
         server_socket.listen(5) # 等待数， 连接数
@@ -831,6 +882,7 @@ class Gouzi:
 
                         if args1 != 0:
                             self.color = args1
+                            # print("color received is:", args1)
                         if args2 != 0:
                             self.gesture = args2 # 手势 
 
