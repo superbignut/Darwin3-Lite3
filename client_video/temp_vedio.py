@@ -82,14 +82,14 @@ if __name__ == '__main__':
 
     pixels_buffer = np.zeros(3) 
 
-    lower_red = np.array([100, 0, 0])   # 红色的最低范围
+    lower_red = np.array([150 , 0, 0])   # 红色的最低范围
     upper_red = np.array([255, 80, 80]) # 红色的最高范围
 
-    lower_blue = np.array([100, 150, 0])
-    upper_blue = np.array([140, 255, 255])
+    lower_blue = np.array([0, 100, 150])
+    upper_blue = np.array([50, 200, 250])
 
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 255, 30])
+    upper_black = np.array([50, 50, 50])
 
 
     while True:
@@ -144,6 +144,9 @@ if __name__ == '__main__':
 
                 # 最大颜色编号
                 max_color = pixels_buffer.argmax()
+                print("red is ", pixels_buffer[0])
+                print("blue is ", pixels_buffer[1])
+                print("black is ", pixels_buffer[2])
                 
                 # 计算最大颜色的占比
                 _ratio = pixels_buffer[max_color] * 5 *100 // total_pixels # 多乘了5 作为放大系数 python2 是整数
@@ -155,9 +158,17 @@ if __name__ == '__main__':
                     color_buffer.pop()
 
                     if color_buffer[0] is not None and all(col == color_buffer[0] for col in color_buffer):
-                        data = "color " + str(color_buffer[0] + 1) + " " + str(0) # 红1 蓝2 黑3
-                        args1 = color_buffer[0] + 1
-                        print(data)
+                        # if
+                        # data = "color " + str(color_buffer[0] + 1) + " " + str(0) # 红1 蓝2 黑3
+                        # args1 = color_buffer[0] + 1
+
+                        if color_buffer == 0:
+                            args1 = Color_Red
+                        elif color_buffer[1] == 1:
+                            args1 = Color_Blue
+                        else:
+                            args1 = Color_Black
+                        # print(data)
                     
                     # Todo  这里把手势加到第二个参数上
                 
@@ -199,5 +210,5 @@ if __name__ == '__main__':
             
             data = "vedio " + str(args1) + " " + str(args2) + " " + str(args3) # 红1 蓝2 黑3
             print(data)
-            # time.sleep(0.5)
+        time.sleep(0.5)
 # 给models 加了一个init

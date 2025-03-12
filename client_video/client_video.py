@@ -25,7 +25,13 @@ from utils.RoI import RoIHumanDetMP
 from utils.HandGesture import HandGesture
 import socket
 
-host = '192.168.1.103'
+develop_mode = False
+if os.getenv("MY_FLAG") == "dev":
+    host = '172.31.111.211'
+    develop_mode = True
+
+else:
+    host = '192.168.1.103'
 socket_port = 12345
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((host, socket_port))
@@ -159,6 +165,10 @@ if __name__ == '__main__':
 
                 # 最大颜色编号
                 max_color = pixels_buffer.argmax()
+
+                print("red is ", pixels_buffer[0])
+                print("blue is ", pixels_buffer[1])
+                print("black is ", pixels_buffer[2])
                 
                 # 计算最大颜色的占比
                 _ratio = pixels_buffer[max_color] * 5 *100 // total_pixels # 多乘了5 作为放大系数 
@@ -174,8 +184,16 @@ if __name__ == '__main__':
 
                     if color_buffer[0] is not None and all(col == color_buffer[0] for col in color_buffer):
                         # data = "color " + str(color_buffer[0] + 1) + " " + str(0) # 红1 蓝2 黑3
-                        args1 = color_buffer[0] + 1
-
+                        # args1 = color_buffer[0] + 1
+                        if color_buffer[0] == 0:
+                            args1 = Color_Red
+                        elif color_buffer[0] == 1:
+                            args1 = Color_Blue
+                        else:
+                            args1 = Color_Black
+        if develop_mode:
+            cv.imshow("Demo", image)
+            k = cv.waitKey(1) # 画图必备
 
         if gestures is not None and gestures.shape[0] != 0: # gestures有两个维度 第一个应该是 图像 第二个是分类结果
             # only use the biggest area right hand
