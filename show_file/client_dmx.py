@@ -32,7 +32,13 @@ RECORD_STATE = 0 #
 RECORD_STATE_DICT = {"Waiting_Input":0, "Input_Now":1, "Waiting_End":2}
 
 
-host = '192.168.1.103'
+develop_mode = False
+if os.getenv("MY_FLAG") == "dev":
+    host = '172.31.111.211'
+    develop_mode = True
+
+else:
+    host = '192.168.1.103'
 socket_port = 12345
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((host, socket_port))
@@ -216,7 +222,7 @@ def flow_record():
                     args1 = Cmd_GoAhead
                 else:
                     print(text)
-                    text  = "你是我的宠物小狗,判断下面这句话是属于哪一类? 1表扬我、2批评我、3与我无关。用编号回答: " + text
+                    text  = "你是我的宠物小狗,判断下面这句话是属于哪一类? 1表扬我、2批评我、3与我无关。只用编号1或2或3回答我: " + text
                     
                     web_text = dmx_api(input_txt=text) # 
                     print(web_text)
