@@ -63,7 +63,7 @@ model_path = 'save/ysc_model'
 
 buffer_path = 'ysc_buffer.pth'
 
-device = torch.device("cuda:0")
+device = torch.device("cpu")
 
 input_node_num_origin = 16
 
@@ -119,7 +119,21 @@ class Darwin_Net():
             print("2 is index :", np.where(self.assign_label.detach().cpu().numpy()==2))
 
 
-    def load_buffer(self, buffer_path='real_ysc_buffer_400_mic.pth'):
+    def load_buffer(self, buffer_path='real_ysc_buffer_400_mic_cpu.pth'):
+        """
+            def load_buffer(buffer_path='real_ysc_buffer_400_mic.pth'):
+    
+                buffer = torch.load(os.path.join(os.path.dirname(__file__), buffer_path))
+
+                for i in range(len(buffer)):
+                    for j in range(len(buffer[i])):
+
+                        buffer[i][j] = buffer[i][j].cpu()
+                
+                torch.save(buffer, f='real_ysc_buffer_400_mic_cpu.pth')
+            这里需要手动把 cuda 的tensor 转为 cpu 是由于在训练的时候导致的，如果可以的话,直接cpu训练就没这么麻烦了
+        
+        """
         try:
             self.buffer = torch.load(os.path.join(os.path.dirname(__file__), buffer_path))
             self.assign_label_update()
@@ -134,7 +148,7 @@ class Darwin_Net():
                 exc_traceback
             ))
         finally:
-            print("load buffer no error...")    
+            print("load buffer no error...", len(self.buffer[0]))    
             print("Net buffer loaded...")
         # print("assign lable is :", self.assign_label)
         # pass
@@ -610,7 +624,7 @@ class Gouzi:
 
         # 将 命令 和 情感 融合后输出
 
-        # 其实我感觉真正应该 清楚状态的 是在执行完动作之后
+        # 其实我感觉真正应该 清楚状态的 是在执行完动作之后, 有道理 说不定 还要再清除一下 emo
 
         if emo == EMO["NULL"]:
             if self.cmd == self.Sensor.Cmd_GoAhead:                
@@ -622,11 +636,11 @@ class Gouzi:
             elif self.cmd == self.Sensor.Cmd_LieDown:
 
                     print("lie down...")
-                    self.m_wang_wang()
+                    # self.m_wang_wang()
                     self.m_lie_down()
             elif self.cmd == self.Sensor.Cmd_StandUp:
                     print("stand up ...")
-                    self.m_wang_wang()
+                    # self.m_wang_wang()
                     self.m_stand_up()
         
         elif emo == EMO["POSITIVE"]:
@@ -681,7 +695,8 @@ class Gouzi:
             elif self.cmd == self.Sensor.Cmd_LieDown:
                 
                 print("lie down angry...")
-                self.m_shake_head()
+                self.m_wang_wang()
+                # self.m_shake_head()
 
             elif self.cmd == self.Sensor.Cmd_StandUp:
                 
@@ -717,6 +732,7 @@ class Gouzi:
                 self.cmd_plus_emotion(cmd=self.cmd, emo=temp_emotion)                   # 这里进行的动作输出
             
                 self.clear_cmd() # 清空
+                self.clear_sensor_status_with_lock() # 指令执行完 最好也能清空状态
 
             time.sleep(0.5) # 慢一点
         
@@ -830,6 +846,8 @@ class Gouzi:
                 temp_input = np.array([np.tile(temp_input, input_num_mul_index)])                                   # 输入维度扩充，第二种扩充
                 
                 temp_output = self.robot_net.run(data=temp_input)                                                   # 网络输出
+                
+                # print("temp output is ", type(temp_output))
 
                 self.emo = (self.robot_net.predict_with_no_assign_label_update(output=temp_output), time.time())    # 情感输出
 
@@ -840,8 +858,10 @@ class Gouzi:
                 temp_input = np.zeros(input_node_num_origin)                                                        # 每当一次有效输入，才会去清空输入
 
                 if emo_input != EMO["NULL"] and if_normal_input:
-                    # 这里进行在线调节
-                    pass
+                                                                                                                    # 这里进行在线调节          
+                    self.robot_net.influence_all_buffer(interact=emo_input, temp_output= temp_output)
+                    print("There is an influence buffer progress...")
+                    # 调用调节函数
             
             elif time.time() - self.emo[1] > self.emo_check_window:
                 

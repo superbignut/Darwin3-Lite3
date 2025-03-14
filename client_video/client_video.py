@@ -185,9 +185,9 @@ if __name__ == '__main__':
                 # 最大颜色编号
                 max_color = pixels_buffer.argmax()
 
-                print("red is ", pixels_buffer[0])
-                print("blue is ", pixels_buffer[1])
-                print("black is ", pixels_buffer[2])
+                # print("red is ", pixels_buffer[0])
+                # print("blue is ", pixels_buffer[1])
+                # print("black is ", pixels_buffer[2])
                 
                 # 计算最大颜色的占比
                 _ratio = pixels_buffer[max_color] * 5 *100 // total_pixels # 多乘了5 作为放大系数 

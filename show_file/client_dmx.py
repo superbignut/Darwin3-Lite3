@@ -209,9 +209,9 @@ def flow_record():
 
                 text = baidu_wav_to_words(file_name=wf_name) # 百度转文字
 
-                if len(text) <= 2:
+                if len(text) <= 4:
                     pass
-                if "起来" in text:
+                elif "起来" in text:
                     print("######### stand up!!!")
                     args1 = Cmd_StandUp
                 elif "趴下" in text:
