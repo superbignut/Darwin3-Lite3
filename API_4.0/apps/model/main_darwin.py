@@ -359,7 +359,7 @@ class Gouzi:
     class State(Enum):
         stand_up = 1
         lie_down = 2
-        low_height = 3
+        # low_height = 3
 
         
         # Todo 当然还有更多样的指令，扭一扭、跟随之类的，先不弄
@@ -433,7 +433,7 @@ class Gouzi:
         time.sleep(1)
         self.controller.not_move() # 进入 静止状态
         time.sleep(1)
-        # self.controller.stand_up() # 站起来
+        self.controller.stand_up() # 站起来
         print('stand_up')
         # pack = struct.pack('<3i', 0x21010202, 0, 0)
         # controller.send(pack) # 
@@ -535,23 +535,24 @@ class Gouzi:
 
     def m_low_height(self):
 
+        # Todo 把这个改成 可以高度调节的那种
         # assert self.current_state != self.State.low_height, "dog is low height now!"
 
-        if self.current_state != self.State.low_height:
+        if self.current_state == self.State.stand_up:
         
             self.controller.low_height_of_dog()
 
-            self.current_state = self.State.low_height
+            # self.current_state = self.State.low_height
 
             time.sleep(2)
             
             self.controller.thread_active = False
 
         else:
-            print("dog is already low height now!")
+            print("dog is already stand up now!")
 
     def restore_height(self):
-
+        # Todo as before
         # assert self.current_state == self.State.low_height, "dog is not low height now!"
 
         if self.current_state == self.State.low_height:
@@ -613,6 +614,18 @@ class Gouzi:
         time.sleep(1.5)
 
 
+    def look_left(self):
+        # 不要用
+        self.controller.look_left()
+        print("look left....")
+        time.sleep(2) # Todo
+    
+    def look_right(self):
+        # 不要用
+        self.controller.look_right()
+        print("look right....")
+        time.sleep(2)
+
 
     """
         实际的传感器排序就如下面所示，输入给模型的编码输入就是 下面的 16 * 16
@@ -628,20 +641,23 @@ class Gouzi:
 
         if emo == EMO["NULL"]:
             if self.cmd == self.Sensor.Cmd_GoAhead:                
-                    
-                    print("go ahead...")
+                    # self.look_left()
+                    self.m_niu_yi_niu()
+                    print("go ahead null...")
             elif self.cmd == self.Sensor.Cmd_GoBack:
-                
-                    print("go abck...")
+                    self.m_wu_wu()
+                    print("go back null...") # 
             elif self.cmd == self.Sensor.Cmd_LieDown:
 
-                    print("lie down...")
-                    # self.m_wang_wang()
-                    self.m_lie_down()
+                    print("lie down null...")
+                    self.m_wang_wang()
+                    self.m_shake_head()
+                    # self.m_lie_down()
             elif self.cmd == self.Sensor.Cmd_StandUp:
-                    print("stand up ...")
-                    # self.m_wang_wang()
-                    self.m_stand_up()
+                    print("stand up null...")
+                    self.m_wang_wang()
+                    self.m_shake_head()
+                    # self.m_stand_up()
         
         elif emo == EMO["POSITIVE"]:
             
@@ -663,39 +679,49 @@ class Gouzi:
                 self.m_happy_rotate()
 
         elif emo == EMO["NEGATIVE"]:
+
+            self.m_shake_head() # 没好像和下一个叠在一起了
+
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead sad...")
+
             elif self.cmd == self.Sensor.Cmd_GoBack:
                 
                 print("go abck sad...")
+                self.m_wu_wu() # 没声音
+
             elif self.cmd == self.Sensor.Cmd_LieDown:
-                
+                self.m_happy_rotate()
                 print("lie down sad...")
-                self.m_shake_head()
+                
 
                 self.m_lie_down()
                 
             elif self.cmd == self.Sensor.Cmd_StandUp:
                 
                 print("stand up sad...")
-                self.m_low_height()
+                # self.m_low_height()
                 
         
         elif emo == EMO["ANGRY"]:
+
+            self.m_wang_wang()
+
+
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead angry...")
                 
                 # self.m_di_tou()
-                self.m_wang_wang()
+                # self.m_wang_wang()
 
             elif self.cmd == self.Sensor.Cmd_GoBack:
                 
                 print("go abck angry...")
-                self.m_wang_wang()
+                # self.m_wang_wang()
             elif self.cmd == self.Sensor.Cmd_LieDown:
                 
                 print("lie down angry...")
-                self.m_wang_wang()
+                # self.m_wang_wang()
                 # self.m_shake_head()
 
             elif self.cmd == self.Sensor.Cmd_StandUp:
@@ -733,6 +759,13 @@ class Gouzi:
             
                 self.clear_cmd() # 清空
                 self.clear_sensor_status_with_lock() # 指令执行完 最好也能清空状态
+            
+            else:
+
+                if time.time() - self.emo[1] < self.emo_check_window: 
+                    # 窗口内
+                    pass
+
 
             time.sleep(0.5) # 慢一点
         
@@ -848,6 +881,10 @@ class Gouzi:
                 temp_output = self.robot_net.run(data=temp_input)                                                   # 网络输出
                 
                 # print("temp output is ", type(temp_output))
+
+                if self.is_moving == False:
+                                                                                                                    # 只有不在运动的时候， 才会进行情感计算 # Todo
+                    pass
 
                 self.emo = (self.robot_net.predict_with_no_assign_label_update(output=temp_output), time.time())    # 情感输出
 

@@ -82,8 +82,78 @@ class Controller:
         tt = threading.Thread(target=temp_thread, name="di_tou_thread_ltl")
         tt.start()
         
+    def move_forward(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        def temp_func():
+            print("move forward....")
+            while self.thread_active:
+                if not self.move_mode: # 如果不是运动模式
+                    self.do_move()
+                
+                pack = struct.pack('<3i', 0x21010130, 7000 + 2000 * level, 0)
+                self.send(pack) # 
+                time.sleep(0.2)
 
+        temp_thread = threading.Thread(target=temp_func, name="move_forward")
+        temp_thread.start()
+
+
+    def move_backward(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        def temp_func():
+            print("move backward....")
+            while self.thread_active:
+                if not self.move_mode: # 如果不是运动模式
+                    self.do_move()
+                
+                pack = struct.pack('<3i', 0x21010130, -7000 - 2000 * level, 0)
+                self.send(pack) # 
+                time.sleep(0.2)
+
+        temp_thread = threading.Thread(target=temp_func, name="move_backward")
+        temp_thread.start()
+
+    def turn_left(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        def temp_func():
+            print("turn left....")
+            while self.thread_active:
+                if not self.move_mode: # 如果不是运动模式
+                    self.do_move()
+                
+                pack = struct.pack('<3i', 0x21010135, -9000 - 2000 * level, 0)
+                self.send(pack) # 
+                time.sleep(0.2)
+
+        temp_thread = threading.Thread(target=temp_func, name="turn left")
+        temp_thread.start()
+    
+    def turn_right(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        def temp_func():
+            print("turn right....")
+            while self.thread_active:
+                if not self.move_mode: # 如果不是运动模式
+                    self.do_move()
+                
+                pack = struct.pack('<3i', 0x21010135, 9000 + 2000 * level, 0)
+                self.send(pack) # 
+                time.sleep(0.2)
+
+        temp_thread = threading.Thread(target=temp_func, name="turn right")
+        temp_thread.start()
+    
+    
     def di_tou_new(self):
+        # 这里是调的 语音指令 但好像不太好用
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
         self.not_move()
         time.sleep(0.1)
@@ -91,7 +161,26 @@ class Controller:
         
         pack = struct.pack('<3i', 0x21010C0A, 8, 0) 
         self.send(pack)         
+    
+    def look_left(self):
+        # 这里是调的 语音指令 但好像不太好用
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        self.not_move()
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
         
+        pack = struct.pack('<3i', 0x21010C0A, 11, 0) 
+        self.send(pack)  
+
+    def look_right(self):
+        # 这里是调的 语音指令 但好像不太好用
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        self.not_move()
+        time.sleep(0.1)
+        self.thread_active = True # 再开启
+        
+        pack = struct.pack('<3i', 0x21010C0A, 12, 0) 
+        self.send(pack)              
 
 
     def not_move(self):
@@ -150,7 +239,7 @@ class Controller:
         time.sleep(0.1)
         self.thread_active = True # 再开启
         def temp_func():
-            print("开始摇摆")
+            print("左右转")
             while self.thread_active:
                 if not self.move_mode: # 不是运动模式
                     pack = struct.pack('<3i', 0x21010131, 20000, 0)
@@ -168,15 +257,16 @@ class Controller:
         time.sleep(0.1)
         self.thread_active = True # 再开启
         def temp_func():
-            print("开始摇摆")
+            print("开始摆")
             while self.thread_active:
                 if not self.move_mode: # 不是运动模式
-                    pack = struct.pack('<3i', 0x21010135, 15000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)
-                    pack = struct.pack('<3i', 0x21010135, -15000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)    
+                    self.not_move()
+                pack = struct.pack('<3i', 0x21010135, 15000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)
+                pack = struct.pack('<3i', 0x21010135, -15000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)    
 
         temp_thread = threading.Thread(target=temp_func, name="temp_func_in_pianhang")
         temp_thread.start()

@@ -38,7 +38,7 @@ fi
 # exit 0
 
 # 启动 vedio 客户端
-if false; then
+if true; then
     (
         echo "Starting color client..."
         cd client_video

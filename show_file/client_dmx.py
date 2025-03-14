@@ -217,9 +217,12 @@ def flow_record():
                 elif "趴下" in text:
                     print("######### lie down!!!")
                     args1 = Cmd_LieDown
-                elif "过来" in text:
-                    print("######### lie down!!!")
+                elif "走过来" in text:
+                    print("######### go head !!!")
                     args1 = Cmd_GoAhead
+                elif "走过去" in text:
+                    print("######### go back!!!")
+                    args1 = Cmd_GoBack
                 else:
                     print(text)
                     text  = "你是我的宠物小狗,判断下面这句话是属于哪一类? 1表扬我、2批评我、3与我无关。只用编号1或2或3回答我: " + text
