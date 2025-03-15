@@ -220,7 +220,7 @@ def flow_record():
                 elif "走过来" in text:
                     print("######### go head !!!")
                     args1 = Cmd_GoAhead
-                elif "走过去" in text:
+                elif "后退" in text:
                     print("######### go back!!!")
                     args1 = Cmd_GoBack
                 else:
@@ -246,7 +246,7 @@ def flow_record():
                 if args1 != 0 or args2 != 0:
                     data = "dmx " + str(args1) + " " + str(args2) +  " 0" # 第三个参数总是0
                     client_socket.sendall(data.encode('utf-8'))
-                    # print(data)
+                    print(data)
                     
                     # 清空
                     args1 = 0   # socket 第一个参数

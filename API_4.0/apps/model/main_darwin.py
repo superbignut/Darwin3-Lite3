@@ -85,9 +85,18 @@ def _bo_fang(index):
             file_name = "wang_wang.wav"
         elif index == 2:
             file_name = "woof_sad.wav"
+        elif index == 3:
+            file_name = "woof_sad_new.wav" # 声音更短
         
         if not develop_mode:
-            os.system(f'aplay "{file_name}"') # 原来这个这么简答，非要去使用 pyaudio 干嘛呢
+            
+            def play_audio_t():
+                os.system(f'aplay "{file_name}"') # 
+            
+            play_thread = threading.Thread(target=play_audio_t, name="play_audio")
+            play_thread.start()
+            # 使用线程播放，就可以和动作同时进行
+
         else:
             import winsound
             winsound.PlaySound(file_name, winsound.SND_FILENAME)
@@ -605,13 +614,13 @@ class Gouzi:
         print("wang wang wang......")
         _bo_fang(index=1)
 
-        time.sleep(0.5)
+        # time.sleep(0.5)
     
     def m_wu_wu(self):
         
-        _bo_fang(index=2)
+        _bo_fang(index=3)
         
-        time.sleep(1.5)
+        # time.sleep(1.5)
 
 
     def look_left(self):
@@ -625,6 +634,11 @@ class Gouzi:
         self.controller.look_right()
         print("look right....")
         time.sleep(2)
+    
+    def m_dian_tou(self):
+        self.controller.fuyang_diantou()
+        time.sleep(2)
+        self.controller.thread_active = False
 
 
     """
@@ -645,19 +659,20 @@ class Gouzi:
                     self.m_niu_yi_niu()
                     print("go ahead null...")
             elif self.cmd == self.Sensor.Cmd_GoBack:
-                    self.m_wu_wu()
+                    self.m_wu_wu() # 播放的时间太长了 # 声音会被自己录到
+                    self.m_dian_tou()   
                     print("go back null...") # 
             elif self.cmd == self.Sensor.Cmd_LieDown:
 
                     print("lie down null...")
                     self.m_wang_wang()
-                    self.m_shake_head()
-                    # self.m_lie_down()
+                    # self.m_shake_head()
+                    self.m_lie_down()
             elif self.cmd == self.Sensor.Cmd_StandUp:
                     print("stand up null...")
-                    self.m_wang_wang()
+                    # self.m_wu_wu() 
                     self.m_shake_head()
-                    # self.m_stand_up()
+                    self.m_stand_up()
         
         elif emo == EMO["POSITIVE"]:
             
@@ -680,7 +695,7 @@ class Gouzi:
 
         elif emo == EMO["NEGATIVE"]:
 
-            self.m_shake_head() # 没好像和下一个叠在一起了
+            self.m_shake_head() # 没好像和下一个叠在一起了 # 这里最好能 低头摇
 
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead sad...")
@@ -691,7 +706,7 @@ class Gouzi:
                 self.m_wu_wu() # 没声音
 
             elif self.cmd == self.Sensor.Cmd_LieDown:
-                self.m_happy_rotate()
+                self.m_happy_rotate() # 会重复
                 print("lie down sad...")
                 
 
@@ -700,6 +715,7 @@ class Gouzi:
             elif self.cmd == self.Sensor.Cmd_StandUp:
                 
                 print("stand up sad...")
+                self.m_stand_up()
                 # self.m_low_height()
                 
         

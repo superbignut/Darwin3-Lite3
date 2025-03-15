@@ -196,24 +196,22 @@ class Controller:
         self.send(struct.pack('<3i', 0x21010D06, 0, 0))
         
 
-    def fuyang_or_qianhou(self):
+    def fuyang_diantou(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         def temp_func():
             print("开始摇摆")
             while self.thread_active:
-                if not self.move_mode: # 不是运动模式
-                    pack = struct.pack('<3i', 0x21010130, 12000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)
-                    pack = struct.pack('<3i', 0x21010130, -13000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)    
-                else:
-                    pack = struct.pack('<3i', 0x21010130, 7000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)
+                if self.move_mode: # 如果是运动模式
+                    self.not_move()
+                pack = struct.pack('<3i', 0x21010130, 12000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)
+                pack = struct.pack('<3i', 0x21010130, -13000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)    
+
 
         temp_thread = threading.Thread(target=temp_func, name="temp_func_in_fuyang")
         temp_thread.start()
@@ -236,30 +234,31 @@ class Controller:
 
     def zuo_you_huang(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         def temp_func():
             print("左右转")
             while self.thread_active:
-                if not self.move_mode: # 不是运动模式
-                    pack = struct.pack('<3i', 0x21010131, 20000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)
-                    pack = struct.pack('<3i', 0x21010131, -20000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)    
+                if self.move_mode: # 如果是运动模式
+                    self.not_move()
+                pack = struct.pack('<3i', 0x21010131, 20000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)
+                pack = struct.pack('<3i', 0x21010131, -20000, 0)
+                self.send(pack) # 
+                time.sleep(0.3)    
 
         temp_thread = threading.Thread(target=temp_func, name="temp_func_in_zuoyou")
         temp_thread.start()
 
     def pian_hang(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         def temp_func():
             print("开始摆")
             while self.thread_active:
-                if not self.move_mode: # 不是运动模式
+                if self.move_mode: # 如果是运动模式
                     self.not_move()
                 pack = struct.pack('<3i', 0x21010135, 15000, 0)
                 self.send(pack) # 
@@ -275,7 +274,7 @@ class Controller:
     def niu_yi_niu(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
         self.not_move()
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         
         self.send(struct.pack('<3i', 0x21010204, 0, 0))
