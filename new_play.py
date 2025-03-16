@@ -31,7 +31,8 @@ def crop_wav(input_file, output_file, duration_ratio=0.3):
             # 写入裁剪后的音频数据
             new_wav_file.writeframes(frames)
  
-# 使用示例
-input_wav_file = 'woof_sad.wav'  # 输入文件路径
-output_wav_file = 'woof_sad_new.wav'  # 输出文件路径
-crop_wav(input_wav_file, output_wav_file)
+    # 使用示例
+    input_wav_file = 'woof_sad.wav'  # 输入文件路径
+    output_wav_file = 'woof_sad_new.wav'  # 输出文件路径
+    crop_wav(input_wav_file, output_wav_file)
+

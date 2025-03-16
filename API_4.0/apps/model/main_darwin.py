@@ -431,6 +431,11 @@ class Gouzi:
 
 
         print("emotion output is :", temp_emotion)
+    
+    def test_action(self):
+        # 测试狗的动作
+        
+        pass
 
     
     def action_socket_init(self):
@@ -604,11 +609,25 @@ class Gouzi:
         self.controller.niu_yi_niu()
         time.sleep(4)
 
-    def m_di_tou(self):
+    def m_tai_tou_wang(self):
 
-        self.controller.di_tou_new()
+        self.controller.tai_tou()
+
+        _bo_fang(index=1)
+
+        time.sleep(1)
+        
+        self.controller.thread_active = False
+
+    def m_yao_tou_wu(self):
+
+        self.controller.pian_hang()
+
+        _bo_fang(index=3)
 
         time.sleep(2)
+        
+        self.controller.thread_active = False
 
     def m_wang_wang(self):
         print("wang wang wang......")
@@ -665,7 +684,8 @@ class Gouzi:
             elif self.cmd == self.Sensor.Cmd_LieDown:
 
                     print("lie down null...")
-                    self.m_wang_wang()
+                    # self.m_wang_wang()
+                    self.m_niu_yi_niu()
                     # self.m_shake_head()
                     self.m_lie_down()
             elif self.cmd == self.Sensor.Cmd_StandUp:
@@ -675,15 +695,17 @@ class Gouzi:
                     self.m_stand_up()
         
         elif emo == EMO["POSITIVE"]:
-            
+
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead happy...")
             elif self.cmd == self.Sensor.Cmd_GoBack:
                 
                 print("go abck happy...")
+
             elif self.cmd == self.Sensor.Cmd_LieDown:
                 
                 print("lie down happy...")
+                # self.m_happy_rotate()
                 self.m_niu_yi_niu()
                 self.m_lie_down()
                 
@@ -706,10 +728,9 @@ class Gouzi:
                 self.m_wu_wu() # 没声音
 
             elif self.cmd == self.Sensor.Cmd_LieDown:
-                self.m_happy_rotate() # 会重复
+                # self.m_happy_rotate() # 会重复
                 print("lie down sad...")
-                
-
+                self.m_yao_tou_wu()
                 self.m_lie_down()
                 
             elif self.cmd == self.Sensor.Cmd_StandUp:
@@ -720,9 +741,6 @@ class Gouzi:
                 
         
         elif emo == EMO["ANGRY"]:
-
-            self.m_wang_wang()
-
 
             if cmd == self.Sensor.Cmd_GoAhead:
                 print("go ahead angry...")
@@ -736,14 +754,18 @@ class Gouzi:
                 # self.m_wang_wang()
             elif self.cmd == self.Sensor.Cmd_LieDown:
                 
-                print("lie down angry...")
+                
                 # self.m_wang_wang()
                 # self.m_shake_head()
+                self.m_wang_wang()
+                # self.m_stand_up()
+                print("lie down angry, don't do...")
 
             elif self.cmd == self.Sensor.Cmd_StandUp:
                 
-                self.m_shake_head()
-                print("stand up angry...")
+                # self.m_shake_head()
+                self.m_wang_wang()
+                print("stand up angry, don't do...")
 
             
         else:

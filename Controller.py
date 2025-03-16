@@ -13,6 +13,8 @@ class Controller:
         self.stop_heartbeat = False
         self.thread_active = False
         self.move_mode = False
+        self.move_low = False
+        self.stand_low = False
 
         self.heart_flag = True # 最后的最后 关闭心跳
 
@@ -56,14 +58,16 @@ class Controller:
         print("抬头了！！！")
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
         self.not_move()
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         
         def temp_thread():
             while self.thread_active:
-                pack = struct.pack('<3i', 0x21010130, -14000, 0)
+                if self.move_mode: # 如果不是运动模式
+                    self.not_move()
+                pack = struct.pack('<3i', 0x21010130, -21000, 0)
                 self.send(pack) # 
-                time.sleep(0.1)
+                time.sleep(0.2)
         tt = threading.Thread(target=temp_thread, name="tai_tou_thread_ltl")
         tt.start()
 
@@ -71,14 +75,16 @@ class Controller:
         print("低头了！！！")
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
         self.not_move()
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         
         def temp_thread():
             while self.thread_active:
+                if self.move_mode: # 如果不是运动模式
+                    self.not_move()
                 pack = struct.pack('<3i', 0x21010130, 14000, 0) 
                 self.send(pack) # 
-                time.sleep(0.1)
+                time.sleep(0.2)
         tt = threading.Thread(target=temp_thread, name="di_tou_thread_ltl")
         tt.start()
         
@@ -97,6 +103,67 @@ class Controller:
                 time.sleep(0.2)
 
         temp_thread = threading.Thread(target=temp_func, name="move_forward")
+        temp_thread.start()
+
+
+    def move_low_forward(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(1)
+        self.thread_active = True # 再开启
+
+        def temp_func():
+            print("move low forward....")
+            if not self.move_mode: # 如果不是运动模式
+                self.do_move()
+
+            time.sleep(0.1)
+
+            if not self.move_low:
+
+                self.do_move_low() # 切到匍匐
+
+            while self.thread_active and self.move_mode:  # 
+
+                pack = struct.pack('<3i', 0x21010130, 7000 + 2000 * level, 0)
+                self.send(pack) # 
+
+                time.sleep(0.2)
+            
+            pack = struct.pack('<3i', 0x21010130, 0, 0) # 清空
+            self.send(pack) # 
+
+        temp_thread = threading.Thread(target=temp_func, name="move_forward_low")
+        temp_thread.start()
+
+
+    def move_low_backward(self, level=1):
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        time.sleep(1)
+
+
+        def temp_func():
+            print("move low backward....")
+            if not self.move_mode: # 如果不是运动模式
+                self.do_move()
+
+            time.sleep(0.1)
+            
+            if not self.move_low:
+
+                self.do_move_low() # 切到匍匐
+
+            while self.thread_active:    
+
+                pack = struct.pack('<3i', 0x21010130, -7000 - 2000 * level, 0)
+                self.send(pack) # 
+
+                time.sleep(0.2)
+            
+                """             pack = struct.pack('<3i', 0x21010406, 0, 0) # 切换回去
+                self.send(pack) #  """
+
+        temp_thread = threading.Thread(target=temp_func, name="move_backward_low")
+        self.thread_active = True # 再开启
         temp_thread.start()
 
 
@@ -194,6 +261,31 @@ class Controller:
         self.move_mode = True
         self.send(struct.pack('<3i', 0x21010D06, 0, 0))
         self.send(struct.pack('<3i', 0x21010D06, 0, 0))
+
+    
+    def do_move_low(self):
+        self.move_low = True
+        if not self.move_mode:
+            self.do_move()
+
+        pack = struct.pack('<3i', 0x21010406, 0, 0) # 匍匐
+        self.send(pack) # 
+
+        self.not_move()
+        time.sleep(0.5)
+
+    def not_move_low(self):
+        self.move_low = False
+        if not self.move_mode:
+            self.do_move()
+
+        pack = struct.pack('<3i', 0x21010406, 0, 0) # 匍匐
+        self.send(pack) # 
+
+
+
+
+    
         
 
     def fuyang_diantou(self):
@@ -218,18 +310,26 @@ class Controller:
     
     def low_height_of_dog(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
-        time.sleep(0.1)
-        self.thread_active = True # 再开启
+        time.sleep(0.4)
+        # self.stand_low = True
+
+        if self.move_mode: # 不是运动模式
+            self.not_move()
         def temp_func():
             print("降低")
-            while self.thread_active:
-                if not self.move_mode: # 不是运动模式
-                    pack = struct.pack('<3i', 0x21010102, -30000, 0)
-                    self.send(pack) # 
-                    time.sleep(0.3)
+            while self.thread_active and not self.move_mode:
+                pack = struct.pack('<3i', 0x21010102, -35000, 0)
+                self.send(pack) # 
+                time.sleep(0.1)
+            # self.stand_low = False
+
             pack = struct.pack('<3i', 0x21010102, 0, 0)
-            self.send(pack) # 回复初始高度 # 这里需要外部的 定时 还原才能回去
+            self.send(pack) # 
+            time.sleep(0.4)
+
+
         temp_thread = threading.Thread(target=temp_func, name="temp_func_gaodu")
+        self.thread_active = True # 再开启
         temp_thread.start()
 
     def zuo_you_huang(self):
@@ -284,12 +384,32 @@ class Controller:
     def da_zhao_hu(self):
         self.thread_active = False # 先关闭， 也就是把其他线程关掉
         self.not_move()
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.thread_active = True # 再开启
         
         self.send(struct.pack('<3i', 0x21010507, 0, 0))
         
         return 
+    
+
+    def follow(self):
+        # 这里测试 接口里面的follow 是否能用
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        self.do_move()
+        time.sleep(0.3)
+        self.thread_active = True # 再开启
+        
+        self.send(struct.pack('<3i', 0x21012109, 0xC0, 0))
+
+    def close_ai(self):
+        
+        # 关闭 follow 功能
+        self.thread_active = False # 先关闭， 也就是把其他线程关掉
+        self.do_move()
+        time.sleep(0.3)
+        self.thread_active = True # 再开启
+        
+        self.send(struct.pack('<3i', 0x21012109, 0, 0))
 
     def thread_all_stop(self):
         self.thread_active = False
