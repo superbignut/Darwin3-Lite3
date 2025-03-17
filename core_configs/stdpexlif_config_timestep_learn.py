@@ -111,7 +111,7 @@ def spaic_stdpexlif_ts_learn_config(timestep=25, th_inc=25, th_sub=1, vreset=-10
     # 迹的量程是7位，所以最大127
     core_config.set_register("CR_LPARXY", 0x0E | 0x0E<<16) # LPAR0 = 15 # 不衰减 LPAR2 = 15
     core_config.set_register("CR_LPARR", 0x0E << 8 | 0x0E << 16) # LPAR5 = 15 防止 右移9取整约没了； LPAR6=15 # 脉冲系数
-    core_config.set_register("CR_WPARA", 0x03 | int(hex((-1 & 0xff)<<8), 16)) # wpar0 = 1 wpar1 = -1 # 这里的5 和 -5 应该改成 1 1奥 
+    core_config.set_register("CR_WPARA", 0x01 | int(hex((-5 & 0xff)<<8), 16)) # wpar0 = 1 wpar1 = -1 # 这里的5 和 -5 应该改成 1 1奥 
     core_config.set_register("CR_STATE", 0x02)  # 学习状态存储器 清零
     core_config.set_register("CR_QA", (0x4 << 8)) # 状态更新阶段精度 16位 随机取整 *15/16 右移 4位  # 这里要 将 0-2 config.dwnc 中该称 0 write 0 2 0x0008 0x00000400 
     # 每次执行完 需要 用clear_neurons_states 将学习状态 清空，否则 会迹的存在 会影响接下来的权重更新
